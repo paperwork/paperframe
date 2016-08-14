@@ -1,2 +1,2 @@
 # Paperframe
-A Node.js Framework based on Express.js &amp; Mongorito.
+A Node.js REST API framework based on Express.js & Mongorito, used inside Paperwork.
