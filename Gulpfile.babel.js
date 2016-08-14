@@ -14,6 +14,11 @@ const CONFIG = {
     }
 }
 
+function errorHandler(err) {
+    console.log(err.toString());
+    this.emit('end');
+}
+
 gulp.task('default', cb => {
     run('lint', 'build', cb);
 });
@@ -28,6 +33,7 @@ gulp.task('clean', cb => {
 
 gulp.task('lint', cb => {
     return gulp.src([CONFIG.js.src,'!node_modules/**'])
+        .on('error', errorHandler)
         .pipe(eslint())
         .pipe(eslint.format())
         .pipe(eslint.failAfterError());
