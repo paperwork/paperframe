@@ -93,7 +93,7 @@
         "semi": 2,
         "accessor-pairs": 2,
         "no-dupe-keys": 2,
-        "require-jsdoc": [1, { "require": { "FunctionDeclaration": true, "MethodDefinition": true, "ClassDeclaration": true }}],
+        "require-jsdoc": [2, { "require": { "FunctionDeclaration": true, "MethodDefinition": true, "ClassDeclaration": true }}],
         "valid-jsdoc": 2
     }
 }
