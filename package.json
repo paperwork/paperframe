@@ -53,6 +53,7 @@
     "babel-preset-es2015-node6": "^0.3.0",
     "babel-preset-stage-0": "^6.5.0",
     "eslint": "^3.2.2",
+    "eslint-plugin-ava": "^3.0.0",
     "gulp": "^3.9.1",
     "gulp-babel": "^6.1.2",
     "gulp-eslint": "^3.0.1",
