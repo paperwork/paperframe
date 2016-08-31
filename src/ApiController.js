@@ -1,9 +1,5 @@
 'use strict';
 
-import Controller from './Controller';
-import bodyParser from 'body-parser';
-import _ from 'lodash';
-
 /**
  * HTTP status code imports.
  */
@@ -24,85 +20,37 @@ import {
 /**
  * ApiController class.
  */
-class ApiController extends Controller {
+class ApiController {
     /**
-     * Initialize ApiController.
+     * Initialize Controller.
      *
      * @method     constructor
      * @param      {object}   config  The controller configuration.
      */
     constructor(config) {
-        super(config);
-        this._parser = bodyParser.json(config.bodyParser);
-
-        let routes = [
-            { name: 'index',   action: 'get',    url: '/'    }, // GET => INDEX
-            { name: 'create',  action: 'post',   url: '/'    }, // POST => CREATE
-            { name: 'show',    action: 'get',    url: '/:id' }, // GET:id => SHOW:id
-            { name: 'update',  action: 'put',    url: '/:id' }, // PUT => UPDATE
-            { name: 'destroy', action: 'delete', url: '/:id' }  // DELETE => DESTROY
-        ];
-
-        _.forEach(routes, route => {
-            this._router[route.action](route.url, this._parser, (req, res) => {
-                let params = this.getRouteParamsArray(route.name, req, res);
-
-                return this[route.name].apply(this, params)
-                .then(responseRaw => {
-                    return this.response(HTTP_CODE_OK, responseRaw);
-                }, rejectionRaw => {
-                    return this.response((rejectionRaw.code ? rejectionRaw.code : HTTP_CODE_BAD_REQUEST), (rejectionRaw.message ? rejectionRaw.message : rejectionRaw));
-                })
-                .then(responseBrewed => {
-                    return res.status(responseBrewed.code).send(responseBrewed);
-                })
-                .catch(responseError => {
-                    return this.response(HTTP_CODE_INTERNAL_SERVER_ERROR, responseError)
-                    .then(responseErrorBrewed => {
-                        return res.status(HTTP_CODE_INTERNAL_SERVER_ERROR).send(responseErrorBrewed);
-                    });
-                });
-            });
-        });
+        this._config = config;
     }
 
     /**
-     * Get the route params array.
+     * Get the logger instance.
      *
-     * @param      {string}  routeName  The route name
-     * @param      {object}  req        The req
-     * @param      {object}  res        The res
-     * @return     {Array}   The route params array.
+     * @return     {object}  The instance.
      */
-    getRouteParamsArray(routeName, req, res) {
-        let params = [];
+    get log() {
+        return this._config.logger;
+    }
 
-        params.push({
-            'request': req,
-            'response': res,
-            'session': (req.user ? req.user : {})
+    /**
+     * Implement default beforeIndex (GET /) handler.
+     *
+     * @method     beforeIndex
+     * @param      {object}   headers  The ExpressJS req & res, packed into the "request" and "response" attributes of headers object.
+     * @return     {Promise}  Promise that fulfills with NULL response.
+     */
+    beforeIndex(headers) {
+        return new Promise((fulfill, reject) => {
+            fulfill(null);
         });
-
-        switch(routeName) {
-        case 'index':
-            break;
-        case 'create':
-            params.push(req.body);
-            break;
-        case 'show':
-        case 'destroy':
-            params.push(req.params.id);
-            break;
-        case 'update':
-            params.push(req.params.id);
-            params.push(req.body);
-            break;
-        default:
-            console.warn('Unhanled route name %s!', routeName);
-            break;
-        }
-
-        return params;
     }
 
     /**
@@ -115,6 +63,20 @@ class ApiController extends Controller {
     index(headers) {
         return new Promise((fulfill, reject) => {
             reject(GR_NOT_IMPLEMENTED);
+        });
+    }
+
+    /**
+     * Implement default before create (POST /) handler.
+     *
+     * @method     beforeCreate
+     * @param      {object}   headers  The ExpressJS req & res, packed into the "request" and "response" attributes of headers object.
+     * @param      {object}   data     The body data.
+     * @return     {Promise}  Promise that fulfills with NULL response.
+     */
+    beforeCreate(headers, data) {
+        return new Promise((fulfill, reject) => {
+            fulfill(null);
         });
     }
 
@@ -133,6 +95,20 @@ class ApiController extends Controller {
     }
 
     /**
+     * Implement default before show (GET /:id) handler.
+     *
+     * @method     beforeShow
+     * @param      {object}   headers  The ExpressJS req & res, packed into the "request" and "response" attributes of headers object.
+     * @param      {string}   id       The ressource ID.
+     * @return     {Promise}  Promise that fulfills with NULL response.
+     */
+    beforeShow(headers, id) {
+        return new Promise((fulfill, reject) => {
+            fulfill(null);
+        });
+    }
+
+    /**
      * Implement default show (GET /:id) handler.
      *
      * @method     show
@@ -143,6 +119,21 @@ class ApiController extends Controller {
     show(headers, id) {
         return new Promise((fulfill, reject) => {
             reject(GR_NOT_IMPLEMENTED);
+        });
+    }
+
+    /**
+     * Implement default before update (PUT /:id) handler.
+     *
+     * @method     beforeUpdate
+     * @param      {object}   headers  The ExpressJS req & res, packed into the "request" and "response" attributes of headers object.
+     * @param      {string}   id       The ressource ID.
+     * @param      {object}   data     The body data.
+     * @return     {Promise}  Promise that fulfills with NULL response.
+     */
+    beforeUpdate(headers, id, data) {
+        return new Promise((fulfill, reject) => {
+            fulfill(null);
         });
     }
 
@@ -162,6 +153,20 @@ class ApiController extends Controller {
     }
 
     /**
+     * Implement default before destroy (DELETE /:id) handler.
+     *
+     * @method     beforeDestroy
+     * @param      {object}   headers  The ExpressJS req & res, packed into the "request" and "response" attributes of headers object.
+     * @param      {string}   id       The ressource ID.
+     * @return     {Promise}  Promise that fulfills with NULL response.
+     */
+    beforeDestroy(headers, id) {
+        return new Promise((fulfill, reject) => {
+            fulfill(null);
+        });
+    }
+
+    /**
      * Implement default destroy (DELETE /:id) handler.
      *
      * @method     destroy
@@ -174,6 +179,51 @@ class ApiController extends Controller {
             reject(GR_NOT_IMPLEMENTED);
         });
     }
+
+    /**
+     * Build generic response object.
+     *
+     * @method     response
+     * @param      {number}   code     Response HTTP code.
+     * @param      {number}   status   Response internal status code.
+     * @param      {object}   content  Content object.
+     * @return     {object}   The response
+     */
+    response(code, status, content) {
+        const millisecondsPerSecond = 1000;
+        const defaultStatus = 0;
+        let response = {
+            'code': code || HTTP_CODE_OK,
+            'status': status || defaultStatus,
+            'content': content || {},
+            'timestamp': Math.floor(new Date() / millisecondsPerSecond)
+        };
+
+        if(typeof code === 'object') {
+            if(typeof code.code !== 'undefined') {
+                response.code = code.code;
+            } else {
+                response.code = HTTP_CODE_OK;
+            }
+
+            if(typeof code.status !== 'undefined') {
+                response.status = code.status;
+            } else {
+                response.status = 0;
+            }
+
+            if(typeof code.content !== 'undefined') {
+                response.content = code.content;
+            } else if(typeof code.message !== 'undefined') {
+                response.content = code.message;
+            } else {
+                response.content = {};
+            }
+        }
+
+        return response;
+    }
+
 }
 
 export default ApiController;
