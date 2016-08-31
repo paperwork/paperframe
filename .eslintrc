@@ -74,7 +74,7 @@
         "no-void": 2,
         "no-warning-comments": [1, { "terms": ["todo", "fixme", "workaround", "fix:"], "location": "anywhere" }],
         "no-with": 2,
-        "no-console": 0,
+        "no-console": 2,
         "no-caller": 0,
         "space-in-parens": [2, "never"],
         "radix": 2,
