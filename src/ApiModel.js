@@ -1,12 +1,14 @@
 'use strict';
 
-import Model from './Model';
-import _ from 'lodash';
+import { capitalize as __capitalize } from 'lodash';
+const _ = {
+    'capitalize': __capitalize
+};
 
 /**
  * ApiModel class.
  */
-class ApiModel extends Model {
+class ApiModel {
     /**
      * Configure model.
      *
@@ -49,7 +51,7 @@ class ApiModel extends Model {
             attributesArray = [attributes];
         }
 
-        _.forEach(attributesArray, attribute => {
+        attributesArray.forEach(attribute => {
             if(!this.hiddenAttributes[attribute]) {
                 this.hiddenAttributes.push(attribute);
             }
@@ -71,10 +73,10 @@ class ApiModel extends Model {
 
         this.schema = [];
 
-        _.forEach(hooks.when, when => {
+        hooks.when.forEach(when => {
             this.schema[when] = [];
 
-            _.forEach(hooks.what, what => {
+            hooks.what.forEach(what => {
                 this[when](what, 'validate' + _.capitalize(when) + _.capitalize(what));
             });
         });
@@ -226,7 +228,6 @@ class ApiModel extends Model {
             }
             return true;
         }
-        console.error(validation.error);
         throw new Error(validation.error);
         return false;
     }
