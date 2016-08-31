@@ -1,0 +1,9 @@
+src
+docs
+test
+node_modules
+.eslintignore
+.eslintrc
+.gitignore
+.editorconfig
+.DS_Store
