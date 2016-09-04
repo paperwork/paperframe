@@ -295,10 +295,18 @@ class ApiRouter {
                         return { 'null': true };
                     }, rejection => {
                         if(typeof rejection !== 'undefined' && rejection.null !== true) {
+                            if(rejection instanceof Error) {
+                                this.log.debug(rejection);
+                            }
+
                             return this.routeReturnReject(res, rejection);
                         }
                         return { 'null': true };
                     }).catch(err => {
+                        if(err instanceof Error) {
+                            this.log.debug(err);
+                        }
+
                         return this.routeReturnReject(res, err);
                     });
                 });
