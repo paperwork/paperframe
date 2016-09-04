@@ -41,6 +41,16 @@ class ApiController {
     }
 
     /**
+     * Services shortcutter; Get the service instance.
+     *
+     * @param      {string}  service  The service
+     * @return     {object}  The service object
+     */
+    $(service) {
+        return this._config.services[service];
+    }
+
+    /**
      * Implement default beforeIndex (GET /) handler.
      *
      * @method     beforeIndex
