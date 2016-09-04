@@ -38,7 +38,9 @@ class ApiRouter {
         this._config = config;
         this._apiBasePath = config.apiBasePath;
         this._servicesBasePath = config.servicesBasePath;
+        this._loaderControllerParameters = config.loaderControllerParameters || {};
         this._loaderControllerSuffix = config.loaderControllerSuffix || 'Controller';
+        this._loaderServiceParameters = config.loaderServiceParameters || {};
         this._loaderServiceSuffix = config.loaderServiceSuffix || 'Service';
         this._requestHeadersPreprocessor = config.requestHeadersPreprocessor || null;
         this._logger = config.logger || {
@@ -142,6 +144,7 @@ class ApiRouter {
                             this.log.debug('Initializing new service [%s] ...', service);
                             try {
                                 this._services[service] = new ServiceImport({
+                                    'parameters': this._loaderServiceParameters,
                                     'router': this._router,
                                     'logger': this._logger
                                 });
@@ -159,6 +162,7 @@ class ApiRouter {
             }
             this.log.debug('Initializing new controller for [%s] ...', controllerName);
             try {
+                controllerConfig.parameters = this._loaderControllerParameters;
                 controllerConfig.logger = this._logger;
 
                 controllers[controllerName] = {
