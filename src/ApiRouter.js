@@ -361,7 +361,12 @@ class ApiRouter {
                 httpCode = rejection.code;
             }
 
-            if(typeof rejection.content !== 'undefined') {
+            if(typeof rejection.content === 'undefined') {
+                httpBody = {
+                    'status': defaultStatus,
+                    'content': rejection
+                };
+            } else {
                 httpBody = {
                     'status': rejection.status || defaultStatus,
                     'content': rejection.content
