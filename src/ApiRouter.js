@@ -38,6 +38,8 @@ class ApiRouter {
         this._config = config;
         this._apiBasePath = config.apiBasePath;
         this._servicesBasePath = config.servicesBasePath;
+        this._loaderControllerSuffix = config.loaderControllerSuffix || 'Controller';
+        this._loaderServiceSuffix = config.loaderServiceSuffix || 'Service';
         this._requestHeadersPreprocessor = config.requestHeadersPreprocessor || null;
         this._logger = config.logger || {
             'trace': this.pseudoLogger,
@@ -121,7 +123,7 @@ class ApiRouter {
     initializeControllers() {
         let controllers = {};
 
-        this.loader(this._apiBasePath, 'Controller', null, (controllerName, controllerRequire) => {
+        this.loader(this._apiBasePath, this._loaderControllerSuffix, null, (controllerName, controllerRequire) => {
             const ControllerImport = controllerRequire.default;
             const controllerServiceDependencies = controllerRequire.serviceDependencies;
             const controllerRequestBodyProcessor = controllerRequire.requestBodyProcessor;
@@ -134,7 +136,7 @@ class ApiRouter {
                         this.log.debug('Service depencency [%s] for API endpoint already loaded.', service);
                     } else {
                         this.log.debug('Loading service depencency [%s] for API endpoint ...', service);
-                        this.loader(this._servicesBasePath, 'Service', service, (serviceName, serviceRequire) => {
+                        this.loader(this._servicesBasePath, this._loaderServiceSuffix, service, (serviceName, serviceRequire) => {
                             let ServiceImport = serviceRequire.default;
 
                             this.log.debug('Initializing new service [%s] ...', service);
