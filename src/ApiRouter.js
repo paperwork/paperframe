@@ -130,7 +130,9 @@ class ApiRouter {
             const controllerServiceDependencies = controllerRequire.serviceDependencies;
             const controllerRequestBodyProcessor = controllerRequire.requestBodyProcessor;
             const controllerRoute = controllerRequire.route;
-            let controllerConfig = {};
+            let controllerConfig = {
+                'services': {}
+            };
 
             if(controllerServiceDependencies) {
                 controllerServiceDependencies.forEach((service) => {
@@ -157,7 +159,7 @@ class ApiRouter {
                     }
 
                     // Add loaded dependency to controllerConfig
-                    controllerConfig[service.toLowerCase()] = this._services[service];
+                    controllerConfig.services[service.toLowerCase()] = this._services[service];
                 });
             }
             this.log.debug('Initializing new controller for [%s] ...', controllerName);
