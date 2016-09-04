@@ -195,7 +195,7 @@ class ApiController {
         let response = {
             'code': code || HTTP_CODE_OK,
             'status': status || defaultStatus,
-            'content': content || {},
+            'content': content,
             'timestamp': Math.floor(new Date() / millisecondsPerSecond)
         };
 
