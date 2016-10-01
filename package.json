@@ -1,6 +1,6 @@
 {
   "name": "paperframe",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A Node.js REST API Framework based on Express.js & Mongorito.",
   "main": "lib/index.js",
   "scripts": {
