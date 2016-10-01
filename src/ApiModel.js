@@ -1,5 +1,6 @@
 'use strict';
 
+import { Model } from 'mongorito';
 import { capitalize as __capitalize } from 'lodash';
 const _ = {
     'capitalize': __capitalize
@@ -8,7 +9,7 @@ const _ = {
 /**
  * ApiModel class.
  */
-class ApiModel {
+class ApiModel extends Model {
     /**
      * Configure model.
      *
