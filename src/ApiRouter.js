@@ -55,18 +55,6 @@ class ApiRouter {
         this._router = express();
         this._router.use(cors());
         this._router.use(morgan('dev'));
-        this._router.use((err, req, res, next) => {
-            if (err.name === 'UnauthorizedError') {
-                return this.routeReturnReject(res, {
-                    'code': HTTP_CODE_UNAUTHORIZED,
-                    'content': err
-                });
-            }
-            return this.routeReturnReject(res, {
-                'code': HTTP_CODE_INTERNAL_SERVER_ERROR,
-                'content': err
-            });
-        });
 
         this._services = [];
 
