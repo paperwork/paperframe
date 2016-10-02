@@ -1,6 +1,6 @@
 'use strict';
 
-import { Model } from 'mongorito';
+import { Model, ObjectID } from 'mongorito';
 import { capitalize as __capitalize } from 'lodash';
 const _ = {
     'capitalize': __capitalize
@@ -231,6 +231,24 @@ class ApiModel extends Model {
         }
         throw new Error(validation.error);
         return false;
+    }
+
+    /**
+     * Accessor to the Mongorito ObjectID converter
+     *
+     * @return     {string}  The ObjectID converter
+     */
+    static get objectId() {
+        return ObjectID;
+    }
+
+    /**
+     * Accessor to the Mongorito ObjectID converter
+     *
+     * @return     {string}  The ObjectID converter
+     */
+    static get ObjectId() {
+        return ObjectID;
     }
 }
 

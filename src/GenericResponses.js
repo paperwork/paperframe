@@ -13,13 +13,14 @@ import {
 /**
  * GenericError class
  */
-class GenericError {
+class GenericError extends Error {
     /**
      * Constructor
      *
      * @param     {object}  genericResponse GenericResponse
      */
     constructor(genericResponse) {
+        super();
         this._genericResponse = genericResponse;
     }
 
@@ -48,6 +49,24 @@ class GenericError {
      */
     get message() {
         return this._genericResponse.message;
+    }
+
+    /**
+     * Wrapper for .name
+     *
+     * @return     {string}  The name
+     */
+    get name() {
+        return 'GenericError';
+    }
+
+    /**
+     * Wrapper for .stack
+     *
+     * @return     {string}  The stack
+     */
+    get stack() {
+        return (new Error(this._genericResponse.message)).stack;
     }
 
     /**

@@ -277,31 +277,12 @@ class ApiRouter {
                     let params = this.getRouteParamsArray(route.name, req, res);
                     const paramsHeadersIndex = 0;
 
-                    controllerInstance[beforeRouteName].apply(controllerInstance, params).then(fulfillment => {
+                    return controllerInstance[beforeRouteName].apply(controllerInstance, params).then(fulfillment => {
                         params[paramsHeadersIndex].before = fulfillment;
-                        return true;
-                    }, rejection => {
-                        this.routeReturnReject(res, rejection);
-                        return false;
                     }).then(success => {
-                        if(success) {
-                            return controllerInstance[route.name].apply(controllerInstance, params);
-                        }
-                        return { 'null': true };
+                        return controllerInstance[route.name].apply(controllerInstance, params);
                     }).then(fulfillment => {
-                        if(typeof fulfillment !== 'undefined' && fulfillment.null !== true) {
-                            return this.routeReturnFulfill(res, fulfillment);
-                        }
-                        return { 'null': true };
-                    }, rejection => {
-                        if(typeof rejection !== 'undefined' && rejection.null !== true) {
-                            if(rejection instanceof Error) {
-                                this.log.debug(rejection);
-                            }
-
-                            return this.routeReturnReject(res, rejection);
-                        }
-                        return { 'null': true };
+                        return this.routeReturnFulfill(res, fulfillment);
                     }).catch(err => {
                         if(err instanceof Error) {
                             this.log.debug(err);
@@ -340,15 +321,20 @@ class ApiRouter {
                 httpCode = fulfillment.code;
             }
 
-            if(typeof fulfillment.content !== 'undefined') {
+            if(typeof fulfillment.content === 'undefined') {
+                httpBody = {
+                    'status': defaultStatus,
+                    'content': fulfillment
+                };
+            } else {
                 httpBody = {
                     'status': fulfillment.status || defaultStatus,
                     'content': fulfillment.content
                 };
             }
         }
-
-        return res[httpMethod](httpCode, httpBody);
+        // return res[httpMethod](httpCode, httpBody);
+        return res.status(httpCode)[httpMethod](httpBody);
     }
 
     /**
@@ -382,7 +368,8 @@ class ApiRouter {
             }
         }
 
-        return res[httpMethod](httpCode, httpBody);
+        // return res[httpMethod](httpCode, httpBody);
+        return res.status(httpCode)[httpMethod](httpBody);
     }
 
     /**
