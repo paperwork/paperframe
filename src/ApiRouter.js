@@ -293,7 +293,7 @@ class ApiRouter {
      * @return     {boolean} The result
      */
     routeReturnFulfill(res, fulfillment) {
-        let httpMethod = 'send';
+        let httpMethod = 'json';
         let httpCode = HTTP_CODE_OK;
         let httpBody = {};
         const defaultStatus = 0;
@@ -333,7 +333,7 @@ class ApiRouter {
      * @return     {boolean} The result
      */
     routeReturnReject(res, rejection) {
-        let httpMethod = 'send';
+        let httpMethod = 'json';
         let httpCode = HTTP_CODE_BAD_REQUEST;
         let httpBody = {};
         const defaultStatus = 0;
