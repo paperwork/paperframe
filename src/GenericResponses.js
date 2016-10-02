@@ -4,6 +4,7 @@
  * HTTP status code imports.
  */
 import {
+    HTTP_CODE_NO_CONTENT,
     HTTP_CODE_UNAUTHORIZED,
     HTTP_CODE_NOT_FOUND,
     HTTP_CODE_CONFLICT,
@@ -79,6 +80,13 @@ class GenericError extends Error {
     }
 }
 export { GenericError };
+
+/**
+ * OK, no content.
+ *
+ * @type       {object}
+ */
+export const GR_SUCCESS_NO_CONTENT = { 'code': HTTP_CODE_NO_CONTENT, 'status': 0, 'message': '' };
 
 /**
  * Internal error.
