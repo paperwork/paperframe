@@ -298,7 +298,7 @@ class ApiRouter {
         let httpBody = {};
         const defaultStatus = 0;
 
-        if(typeof fulfillment !== 'undefined') {
+        if(typeof fulfillment !== 'undefined' && fulfillment !== null) {
             if(typeof fulfillment.redirect !== 'undefined'
             && fulfillment.code >= HTTP_CODE_MULTIPLE_CHOICES
             && fulfillment.code <= HTTP_CODE_PERMANENT_REDIRECT) {
@@ -338,7 +338,7 @@ class ApiRouter {
         let httpBody = {};
         const defaultStatus = 0;
 
-        if(typeof rejection !== 'undefined') {
+        if(typeof rejection !== 'undefined' && rejection !== null) {
             if(typeof rejection.code !== 'undefined' && rejection.code >= HTTP_CODE_CONTINUE) {
                 httpCode = rejection.code;
             }

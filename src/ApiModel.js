@@ -1,9 +1,17 @@
 'use strict';
 
-import { Model, ObjectID } from 'mongorito';
-import { capitalize as __capitalize } from 'lodash';
+import { Model, ObjectID } from 'mongoritwo';
+import {
+    capitalize as __capitalize,
+    assign as __assign,
+    clone as __clone,
+    set as __set
+} from 'lodash';
 const _ = {
-    'capitalize': __capitalize
+    'capitalize': __capitalize,
+    'assign': __assign,
+    'clone': __clone,
+    'set': __set
 };
 
 /**
@@ -234,7 +242,7 @@ class ApiModel extends Model {
     }
 
     /**
-     * Accessor to the Mongorito ObjectID converter
+     * Accessor to the Mongoritwo ObjectID converter
      *
      * @return     {string}  The ObjectID converter
      */
@@ -243,7 +251,7 @@ class ApiModel extends Model {
     }
 
     /**
-     * Accessor to the Mongorito ObjectID converter
+     * Accessor to the Mongoritwo ObjectID converter
      *
      * @return     {string}  The ObjectID converter
      */
