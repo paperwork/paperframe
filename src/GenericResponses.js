@@ -126,21 +126,21 @@ export const GR_AUTH_PASSWORD_WRONG = { 'code': HTTP_CODE_UNAUTHORIZED, 'status'
 export const GR_AUTH_CREDENTIALS_MISSING = { 'code': HTTP_CODE_UNAUTHORIZED, 'status': 1000, 'message': 'Credentials missing.' };
 
 /**
- * Authentication, credentials (either username or password or both) missing.
+ * Authentication, user not found.
  *
  * @type       {object}
  */
 export const GR_AUTH_USER_NOT_FOUND = { 'code': HTTP_CODE_NOT_FOUND, 'status': 1200, 'message': 'Requested user not found.' };
 
 /**
- * Authentication, credentials (either username or password or both) missing.
+ * Authentication, token invalid.
  *
  * @type       {object}
  */
 export const GR_AUTH_REFRESH_TOKEN_INVALID = { 'code': HTTP_CODE_INVALID_TOKEN, 'status': 1400, 'message': 'Refresh token invalid.' };
 
 /**
- * Authentication, credentials (either username or password or both) missing.
+ * Authentication, token expired.
  *
  * @type       {object}
  */
