@@ -293,36 +293,7 @@ class ApiRouter {
      * @return     {boolean} The result
      */
     routeReturnFulfill(res, fulfillment) {
-        let httpMethod = 'json';
-        let httpCode = HTTP_CODE_OK;
-        let httpBody = {};
-        const defaultStatus = 0;
-
-        if(typeof fulfillment !== 'undefined' && fulfillment !== null) {
-            if(typeof fulfillment.redirect !== 'undefined'
-            && fulfillment.code >= HTTP_CODE_MULTIPLE_CHOICES
-            && fulfillment.code <= HTTP_CODE_PERMANENT_REDIRECT) {
-                httpMethod = 'redirect';
-            }
-
-            if(fulfillment.code >= HTTP_CODE_CONTINUE) {
-                httpCode = fulfillment.code;
-            }
-
-            if(typeof fulfillment.content === 'undefined') {
-                httpBody = {
-                    'status': defaultStatus,
-                    'content': fulfillment
-                };
-            } else {
-                httpBody = {
-                    'status': fulfillment.status || defaultStatus,
-                    'content': fulfillment.content
-                };
-            }
-        }
-        // return res[httpMethod](httpCode, httpBody);
-        return res.status(httpCode)[httpMethod](httpBody);
+        return this.routeReturn(res, true, fulfillment);
     }
 
     /**
@@ -333,30 +304,48 @@ class ApiRouter {
      * @return     {boolean} The result
      */
     routeReturnReject(res, rejection) {
+        return this.routeReturn(res, false, rejection);
+    }
+
+    /**
+     * Route return.
+     *
+     * @param      {object}  res        The response
+     * @param      {boolean} success    Whether it's a fulfillment (true) or a rejection (false)
+     * @param      {object}  output     The output to be returned
+     * @return     {boolean} The result
+     */
+    routeReturn(res, success, output) {
         let httpMethod = 'json';
-        let httpCode = HTTP_CODE_BAD_REQUEST;
+        let httpCode = (success ? HTTP_CODE_OK : HTTP_CODE_BAD_REQUEST);
         let httpBody = {};
         const defaultStatus = 0;
 
-        if(typeof rejection !== 'undefined' && rejection !== null) {
-            if(typeof rejection.code !== 'undefined' && rejection.code >= HTTP_CODE_CONTINUE) {
-                httpCode = rejection.code;
+        if(typeof output !== 'undefined' && output !== null) {
+            if(typeof output.redirect !== 'undefined'
+            && output.code >= HTTP_CODE_MULTIPLE_CHOICES
+            && output.code <= HTTP_CODE_PERMANENT_REDIRECT) {
+                httpMethod = 'redirect';
             }
 
-            if(typeof rejection.content === 'undefined') {
-                httpBody = {
-                    'status': defaultStatus,
-                    'content': rejection
-                };
+            if(typeof output.code !== 'undefined' && output.code >= HTTP_CODE_CONTINUE) {
+                httpCode = output.code;
+                delete output.code;
+            }
+
+            if(typeof output.status !== 'undefined' && output.status !== null) {
+                httpBody.status = output.status;
+                delete output.status;
             } else {
-                httpBody = {
-                    'status': rejection.status || defaultStatus,
-                    'content': rejection.content
-                };
+                httpBody.status = defaultStatus;
+            }
+
+            if(typeof output.content !== 'undefined' && output.content !== null) {
+                httpBody.content = output.content;
+            } else {
+                httpBody.content = output;
             }
         }
-
-        // return res[httpMethod](httpCode, httpBody);
         return res.status(httpCode)[httpMethod](httpBody);
     }
 
