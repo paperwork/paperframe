@@ -1,26 +1,36 @@
 {
     "parser": "babel-eslint",
     "env": {
-        "browser": true,
+        "browser": false,
         "node": true,
         "es6": true
     },
     parserOptions: {
-        "ecmaVersion": 6,
-        "sourceType": "module"
-    },
-    "ecmaFeatures": {
-        "blockBindings": true,
-        "forOf": true,
-        "modules": true
+        "ecmaVersion": 8,
+        "sourceType": "module",
+        "ecmaFeatures": {
+            "blockBindings": true,
+            "forOf": true,
+            "generators": true,
+            "modules": true,
+            "impliedStrict": false
+        }
     },
     "plugins": [
-        "ava"
+        "ava",
+        "flowtype",
+        "async-await"
     ],
+    "settings": {
+        "flowtype": {
+            "onlyFilesWithFlowAnnotation": true
+        }
+    },
     "rules": {
         "indent": [2, 4],
         "camelcase": 2,
         "comma-spacing": 2,
+        "comma-dangle": [2, "never"],
         "dot-notation": 2,
         "eol-last": 2,
         "new-cap": 2,
@@ -59,6 +69,7 @@
         "no-proto": 2,
         "no-redeclare": 2,
         "no-return-assign": 2,
+        "no-return-await": 2,
         "no-script-url": 2,
         "no-self-compare": 2,
         "no-sequences": 2,
@@ -74,7 +85,7 @@
         "no-void": 2,
         "no-warning-comments": [1, { "terms": ["todo", "fixme", "workaround", "fix:"], "location": "anywhere" }],
         "no-with": 2,
-        "no-console": 1,
+        "no-console": 0,
         "no-caller": 0,
         "space-in-parens": [2, "never"],
         "radix": 2,
@@ -90,10 +101,37 @@
         "guard-for-in": 2,
         "strict": 0,
         "quotes": [2, "single", { "avoidEscape": true }],
+        "quote-props": 0,
         "semi": 2,
         "accessor-pairs": 2,
         "no-dupe-keys": 2,
-        "require-jsdoc": [2, { "require": { "FunctionDeclaration": true, "MethodDefinition": true, "ClassDeclaration": true }}],
-        "valid-jsdoc": 2
+        "require-jsdoc": [1, { "require": { "FunctionDeclaration": true, "MethodDefinition": true, "ClassDeclaration": true }}],
+        "valid-jsdoc": 2,
+        "max-len": [0, { "code": 120, "comments": 120 }],
+        "flowtype/define-flow-type": 1,
+        "flowtype/use-flow-type": 1,
+        "flowtype/valid-syntax": 1,
+        "ava/assertion-arguments": 2,
+        "ava/assertion-message": [0, "always"],
+        "ava/max-asserts": [0, 5],
+        "ava/no-cb-test": 0,
+        "ava/no-identical-title": 2,
+        "ava/no-ignored-test-files": 2,
+        "ava/no-invalid-end": 2,
+        "ava/no-only-test": 0,
+        "ava/no-skip-assert": 2,
+        "ava/no-skip-test": 2,
+        "ava/no-statement-after-end": 2,
+        "ava/no-todo-test": 1,
+        "ava/no-unknown-modifiers": 2,
+        "ava/prefer-power-assert": 0,
+        "ava/test-ended": 2,
+        "ava/test-title": [2, "if-multiple"],
+        "ava/use-t-well": 2,
+        "ava/use-t": 2,
+        "ava/use-test": 2,
+        "ava/use-true-false": 2,
+        "async-await/space-after-async": 2,
+        "async-await/space-after-await": 2
     }
 }

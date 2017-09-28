@@ -1,11 +1,11 @@
-import gulp from 'gulp';
-import sourcemaps from 'gulp-sourcemaps';
-import babel from 'gulp-babel';
-import eslint from 'gulp-eslint';
-import rimraf from 'rimraf';
-import run from 'run-sequence';
-import watch from 'gulp-watch';
-import jsdoc from 'gulp-jsdoc3';
+const gulp = require('gulp');
+const sourcemaps = require('gulp-sourcemaps');
+const babel = require('gulp-babel');
+const eslint = require('gulp-eslint');
+const rimraf = require('rimraf');
+const run = require('run-sequence');
+const watch = require('gulp-watch');
+const jsdoc = require('gulp-jsdoc3');
 
 const CONFIG = {
     js: {
@@ -43,7 +43,8 @@ gulp.task('babel', cb => {
     gulp.src([CONFIG.js.src])
         .pipe(sourcemaps.init())
         .pipe(babel({
-            presets: ['stage-0', 'es2015-node6']
+            presets: [],
+            plugins: ['transform-flow-strip-types']
         }))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(CONFIG.js.dst))
