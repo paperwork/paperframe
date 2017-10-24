@@ -81,7 +81,7 @@ module.exports = class Controller extends Base {
                 throw new Error('Controller: Cannot instantiate new Collection as no Database driver is available. Controller needs to specify "database" as dependency.');
             }
 
-            return new collections[collectionId](database.driver);
+            return (new collections[collectionId](database.driver)).driver;
         }
 
         return null;
@@ -115,6 +115,11 @@ module.exports = class Controller extends Base {
         });
     }
 
+    /*
+     * Implementation example. Do not include this, otherwise the Router typeof
+     * check won't function anymore, resulting in weird effects.
+     */
+    /*
     async beforeIndex(params: ControllerParams): ControllerBeforeReturn {
         return this._notImplementedNull(params);
     }
@@ -154,4 +159,5 @@ module.exports = class Controller extends Base {
     async destroy(params: ControllerParams): ControllerActionReturn {
         return this._notImplementedError(params);
     }
+    */
 };

@@ -31,4 +31,18 @@ module.exports = class Base {
 
         return extension;
     }
+
+    loadExtensionFallback(path: string, fallbackPath: string, module: string): ?Function {
+        let extension = this._require(path);
+
+        if(extension === null) {
+            extension = this._require(module);
+        }
+
+        if(extension === null) {
+            extension = this._require(fallbackPath);
+        }
+
+        return extension;
+    }
 };

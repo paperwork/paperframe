@@ -61,14 +61,19 @@ module.exports = class Router extends Base {
     _modules:                   ModulesTable
     _controllers:               ControllersTable
     _serviceProviders:          ServiceProvidersTable
+    _dirname:                   string
 
     constructor(options: Object) {
         super();
 
+        // --- BEGIN CHECKLIST ---
+
+        // [x] Check for options
         if(typeof options === 'undefined' || options === null) {
             throw new Error('Router: No options specified.');
         }
 
+        // [x] Check for router
         if(options.hasOwnProperty('koaRouter') === false) {
             throw new Error('Router: No KOA router given.');
         }
@@ -76,18 +81,38 @@ module.exports = class Router extends Base {
         // eslint-disable-next-line new-cap
         this._router = new options.koaRouter();
 
+        // [x] Check for JWT handler
+        // TODO: Make it optional
         if(options.hasOwnProperty('jwtHandler') === false) {
             throw new Error('Router: No JWT handler given.');
         }
 
         this._jwt = options.jwtHandler;
 
+        // [x] Check for logger
+        // TODO: Implement console fallback?
+        if(options.hasOwnProperty('logger') === false) {
+            throw new Error('Router: No logger given.');
+        }
+
+        this.logger = options.logger;
+
+        // [x] Check for dirname
+        if(options.hasOwnProperty('dirname') === false) {
+            this._dirname = process.env.SERVICE_DIRNAME || __dirname;
+        } else {
+            this._dirname = options.dirname;
+        }
+
+        // [x] Set up event emitter
         this._ee = new EventEmitter({
             'wildcard': true,
             'newListener': false,
             'maxListeners': 512,
             'verboseMemoryLeak': true
         });
+
+        // [x] Initialize modules, controllers and service providers
         this._modules = {};
         this._controllers = {};
         this._serviceProviders = {};
@@ -146,10 +171,15 @@ module.exports = class Router extends Base {
         let collectionsTable: CollectionsTable = {};
 
         forEach(collectionsArray, (collection: string) => {
+            if(collection.length === Common.EMPTY) {
+                this.logger.debug('Router: Not initializing collections, because there are none.');
+                return false;
+            }
+
             this.logger.debug('Router: Initializing collection %s ...', collection);
 
             let collectionRequire = this.loadExtension(
-                path.join(__dirname, 'Collections', capitalize(collection)),
+                path.join(this._dirname, 'Collections', capitalize(collection)),
                 (prefix + '-collection-' + collection)
             );
 
@@ -159,6 +189,8 @@ module.exports = class Router extends Base {
             }
 
             collectionsTable[collection] = collectionRequire;
+
+            return true;
         });
 
         return collectionsTable;
@@ -169,10 +201,15 @@ module.exports = class Router extends Base {
         let modulesTable: ModulesTable = {};
 
         forEach(modulesArray, (module: string) => {
+            if(module.length === Common.EMPTY) {
+                this.logger.debug('Router: Not initializing modules, because there are none.');
+                return false;
+            }
+
             this.logger.debug('Router: Initializing module %s ...', module);
 
             let moduleRequire = this.loadExtension(
-                path.join(__dirname, 'Modules', capitalize(module)),
+                path.join(this._dirname, 'Modules', capitalize(module)),
                 (prefix + '-module-' + module)
             );
 
@@ -182,6 +219,8 @@ module.exports = class Router extends Base {
             }
 
             modulesTable[module] = moduleRequire;
+
+            return true;
         });
 
         return modulesTable;
@@ -239,7 +278,8 @@ module.exports = class Router extends Base {
         forEach(dependenciesArray, (dependency: string) => {
             if(!this._serviceProviders.hasOwnProperty(dependency)) {
                 this.logger.debug('Router: Initializing new dependency %s ...', dependency);
-                let ServiceProviderRequire = this.loadExtension(
+                let ServiceProviderRequire = this.loadExtensionFallback(
+                    path.join(this._dirname, 'ServiceProviders', capitalize(dependency)),
                     path.join(__dirname, 'ServiceProviders', capitalize(dependency)),
                     (prefix + '-serviceprovider-' + dependency)
                 );
@@ -289,6 +329,7 @@ module.exports = class Router extends Base {
                     let routeParamsMatch = null;
 
                     while((routeParamsMatch = routeParamsRegex.exec(routeUri)) !== null) {
+                        this.logger.debug('Router: Found route parameter %j ...', routeParamsMatch);
                         if(routeParamsMatch.index === routeParamsRegex.lastIndex) {
                             routeParamsRegex.lastIndex++;
                         }
@@ -336,9 +377,12 @@ module.exports = class Router extends Base {
                             'body': controllerInstance.body
                         };
 
+                        this.logger.debug('Router: Passing the following controller parameters: %j', controllerParams);
+
                         // Do we have a before*-handler?
                         if(typeof beforeHandler === 'function') {
                             try {
+                                this.logger.debug('Router: Awaiting beforeHandler and overwriting controller parameters ...');
                                 controllerParams = await beforeHandler.bind(controllerInstance)(controllerParams);
                             } catch(err) {
                                 this.logger.error(err);

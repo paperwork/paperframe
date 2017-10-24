@@ -23,6 +23,10 @@ module.exports.auto = (collectionName: string, availableDrivers: Object) => clas
             }
         }
 
-        this._collectionDriver = new availableDrivers[this._dbc.id]();
+        this._collectionDriver = new availableDrivers[this._dbc.id](this._dbc.client);
+    }
+
+    get driver(): Function {
+        return this._collectionDriver;
     }
 };
