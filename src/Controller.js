@@ -54,6 +54,33 @@ module.exports = class Controller extends Base {
         return this.ctx.req.headers['user-agent'];
     }
 
+    get session(): Object {
+        if(typeof this._ctx !== 'undefined'
+        && this._ctx !== null
+        && this._ctx.hasOwnProperty('state')
+        && typeof this._ctx.state === 'object'
+        && this._ctx.state.hasOwnProperty('user')
+        && typeof this._ctx.state.user === 'object'
+        && this._ctx.state.user.hasOwnProperty('session')) {
+            return this._ctx.state.user.session;
+        }
+
+        return {};
+    }
+
+    get body(): ?any {
+        if(typeof this._ctx !== 'undefined'
+        && this._ctx !== null
+        && this._ctx.hasOwnProperty('request')
+        && typeof this._ctx.request === 'object'
+        && this._ctx.request.hasOwnProperty('body')
+        && typeof this._ctx.request.body !== 'undefined') {
+            return this._ctx.request.body;
+        }
+
+        return null;
+    }
+
     $S(dependencyId: string): any {
         const dependencies = this._config.dependencies;
 
