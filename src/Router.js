@@ -374,6 +374,7 @@ module.exports = class Router extends Base {
                             'session': controllerInstance.session,
                             'before': null,
                             'parameters': ctx.parameters,
+                            'query': ctx.query,
                             'body': controllerInstance.body
                         };
 
