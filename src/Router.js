@@ -356,7 +356,12 @@ module.exports = class Router extends Base {
                         }
                     }
 
-                    const routeAcl = controllerInstance.routeAcl[routeName];
+                    let routeAcl = { 'protected': false };
+
+                    if(controllerInstance.hasOwnProperty('routeAcl') === true
+                    && controllerInstance.routeAcl.hasOwnProperty(routeName) === true) {
+                        routeAcl = controllerInstance.routeAcl[routeName];
+                    }
 
                     // @flowIgnore access on computed type.
                     this._router[routeAction](routeResource, routeUri, async (ctx, next) => {
