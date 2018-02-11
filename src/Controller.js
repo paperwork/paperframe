@@ -136,8 +136,8 @@ module.exports = class Controller extends Base {
 
     _notImplementedError(params: ControllerParams): errorPromise {
         return new Promise((fulfill, reject) => {
-            params.ctx.body = 'Not implemented';
-            params.ctx.code = 404;
+            this.ctx.body = 'Not implemented';
+            this.ctx.code = 404;
             fulfill('Not implemented');
         });
     }
