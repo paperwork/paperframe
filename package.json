@@ -6,7 +6,8 @@
   "scripts": {
     "compile": "gulp",
     "prepublish": "npm run compile",
-    "test": "ava"
+    "test": "ava",
+    "flow": "flow"
   },
   "engines": {
     "node": ">=8.5.0"
