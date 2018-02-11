@@ -20,7 +20,14 @@ export type ControllerConfig = {
     collections: ControllerCollections
 };
 
-export type ControllerParams = Object;
+export type ControllerParams = {
+    session: Object, // TODO: define type
+    before: ?Object,
+    parameters: Object,
+    query: Object,
+    headers: Object,
+    body: Object
+};
 
 export type ControllerBeforeReturn = Promise<any>;
 
