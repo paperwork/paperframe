@@ -6,6 +6,7 @@ const rimraf = require('rimraf');
 const run = require('run-sequence');
 const watch = require('gulp-watch');
 const jsdoc = require('gulp-jsdoc3');
+const shell = require('gulp-shell');
 
 const CONFIG = {
     js: {
@@ -20,7 +21,7 @@ function errorHandler(err) {
 }
 
 gulp.task('default', cb => {
-    run('lint', 'build', cb);
+    run('lint', 'flowtype', 'build', cb);
 });
 
 gulp.task('build', cb => {
@@ -38,6 +39,8 @@ gulp.task('lint', cb => {
         .pipe(eslint.format())
         .pipe(eslint.failAfterError());
 });
+
+gulp.task('flowtype', shell.task(['npm run flow check --show-all-errors']));
 
 gulp.task('babel', cb => {
     gulp.src([CONFIG.js.src])
