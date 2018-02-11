@@ -55,7 +55,8 @@ type ServiceProvidersTable = {
 
 module.exports = class Router extends Base {
     _router:                    Function
-    _jwt:                       Function
+    _jwt:                       ?Function
+    _jwtSecret:                 string
     _ee:                        EventEmitter
     _collections:               CollectionsTable
     _modules:                   ModulesTable
@@ -82,12 +83,17 @@ module.exports = class Router extends Base {
         this._router = new options.koaRouter();
 
         // [x] Check for JWT handler
-        // TODO: Make it optional
         if(options.hasOwnProperty('jwtHandler') === false) {
-            throw new Error('Router: No JWT handler given.');
-        }
+            this._jwt = null;
+            this._jwtSecret = '';
+        } else {
+            if(options.hasOwnProperty('jwtSecret') === false) {
+                throw new Error('Router: With jwtHandler specified, jwtSecret is also required.');
+            }
 
-        this._jwt = options.jwtHandler;
+            this._jwt = options.jwtHandler;
+            this._jwtSecret = options.jwtSecret;
+        }
 
         // [x] Check for logger
         // TODO: Implement console fallback?
@@ -454,6 +460,11 @@ module.exports = class Router extends Base {
 
     authorization(routesAcl: Object): Function {
         return async (ctx, next) => {
+            if(typeof this._jwt === 'undefined'
+            || this._jwt === null) {
+                return next();
+            }
+
             const url = ctx.url;
             const requestMethod = ctx.request.method;
             const matchedPaths = this._router.match(url).path;
@@ -498,7 +509,8 @@ module.exports = class Router extends Base {
                 return next();
             }
 
-            return this._jwt({ secret: process.env.JWT_SECRET })(ctx, next);
+            // @flowIgnore because flow doesn't seem to notice the undefined/null check at the beginning.
+            return this._jwt({ secret: this._jwtSecret })(ctx, next);
         };
     }
 
