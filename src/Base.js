@@ -1,5 +1,6 @@
 //@flow
 
+const PaperframeCommon = require('./Common');
 
 module.exports = class Base {
     _logger:                    Function
@@ -44,5 +45,23 @@ module.exports = class Base {
         }
 
         return extension;
+    }
+
+    hasEnv(name: string): boolean {
+        if(typeof process.env[name] === 'undefined'
+        || process.env[name] === null
+        || process.env[name].length === PaperframeCommon.EMPTY) {
+            return false;
+        }
+
+        return true;
+    }
+
+    getEnv(name: string): any {
+        if(this.hasEnv(name) === true) {
+            return process.env[name];
+        }
+
+        return undefined;
     }
 };
