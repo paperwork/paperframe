@@ -5,13 +5,18 @@ const eslint = require('gulp-eslint');
 const rimraf = require('rimraf');
 const run = require('run-sequence');
 const watch = require('gulp-watch');
-const jsdoc = require('gulp-jsdoc3');
+const gulpDocumentation = require('gulp-documentation');
 const shell = require('gulp-shell');
 
 const CONFIG = {
     js: {
         src: './src/**/*.js',
         dst: './lib'
+    },
+    documentation: {
+        js: {
+            dst: './documentation'
+        }
     }
 }
 
@@ -59,9 +64,11 @@ gulp.task('doc', cb => {
 });
 
 gulp.task('docs', cb => {
-    let jsdocjson = require('./.jsdoc.json');
-    gulp.src([CONFIG.js.src], {read: false})
-        .pipe(jsdoc(jsdocjson, cb));
+    return gulp.src(CONFIG.js.src)
+    .pipe(gulpDocumentation('md', {}, {
+        'name': 'Paperframe'
+    }))
+    .pipe(gulp.dest(CONFIG.documentation.js.dst));
 });
 
 gulp.task('watch', () => {

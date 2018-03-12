@@ -1,5 +1,5 @@
 src
-docs
+documentation
 test
 node_modules
 .eslintignore
@@ -7,3 +7,4 @@ node_modules
 .gitignore
 .editorconfig
 .DS_Store
+*.sublime-project

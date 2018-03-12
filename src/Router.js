@@ -53,6 +53,11 @@ type ServiceProvidersTable = {
     [key: string]: any
 };
 
+/**
+ * Class for Router
+ *
+ * @class      Router
+ */
 module.exports = class Router extends Base {
     _router:                    Function
     _jwt:                       ?Function
@@ -64,6 +69,9 @@ module.exports = class Router extends Base {
     _serviceProviders:          ServiceProvidersTable
     _dirname:                   string
 
+    /**
+     * Constructs the class
+     */
     constructor(options: Object) {
         super();
 

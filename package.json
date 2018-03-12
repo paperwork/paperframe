@@ -6,6 +6,7 @@
   "scripts": {
     "compile": "gulp",
     "prepublish": "npm run compile",
+    "docs": "gulp docs",
     "test": "ava",
     "flow": "flow"
   },
@@ -61,12 +62,10 @@
     "gulp-develop-server": "^0.5.2",
     "gulp-eslint": "^4.0.2",
     "gulp-istanbul": "^1.1.3",
-    "gulp-jsdoc3": "^1.0.1",
     "gulp-shell": "^0.6.5",
     "gulp-sourcemaps": "^2.6.4",
     "gulp-watch": "^5.0.0",
     "isparta": "^4.0.0",
-    "jsdoc": "^3.5.5",
     "jshint-sourcemap-reporter": "0.0.1",
     "minami": "^1.2.3",
     "nsp": "^3.2.1",
@@ -76,7 +75,9 @@
     "tmp": "0.0.33"
   },
   "dependencies": {
+    "documentation": "^6.1.0",
     "eventemitter2": "^5.0.1",
+    "gulp-documentation": "^3.2.1",
     "http-status-codes": "^1.3.0",
     "lodash": "^4.17.5"
   }

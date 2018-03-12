@@ -105,8 +105,6 @@
         "semi": 2,
         "accessor-pairs": 2,
         "no-dupe-keys": 2,
-        "require-jsdoc": [1, { "require": { "FunctionDeclaration": true, "MethodDefinition": true, "ClassDeclaration": true }}],
-        "valid-jsdoc": 2,
         "max-len": [0, { "code": 120, "comments": 120 }],
         "flowtype/define-flow-type": 1,
         "flowtype/use-flow-type": 1,
