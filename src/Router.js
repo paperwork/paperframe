@@ -193,7 +193,7 @@ module.exports = class Router extends Base {
             this.logger.debug('Router: Initializing collection %s ...', collection);
 
             let collectionRequire = this.loadExtension(
-                path.join(this._dirname, 'Collections', capitalize(collection)),
+                path.join(this._dirname, 'Collections', upperFirst(collection)),
                 (prefix + '-collection-' + collection)
             );
 
@@ -223,7 +223,7 @@ module.exports = class Router extends Base {
             this.logger.debug('Router: Initializing module %s ...', module);
 
             let moduleRequire = this.loadExtension(
-                path.join(this._dirname, 'Modules', capitalize(module)),
+                path.join(this._dirname, 'Modules', upperFirst(module)),
                 (prefix + '-module-' + module)
             );
 
@@ -293,8 +293,8 @@ module.exports = class Router extends Base {
             if(!this._serviceProviders.hasOwnProperty(dependency)) {
                 this.logger.debug('Router: Initializing new dependency %s ...', dependency);
                 let ServiceProviderRequire = this.loadExtensionFallback(
-                    path.join(this._dirname, 'ServiceProviders', capitalize(dependency)),
-                    path.join(__dirname, 'ServiceProviders', capitalize(dependency)),
+                    path.join(this._dirname, 'ServiceProviders', upperFirst(dependency)),
+                    path.join(__dirname, 'ServiceProviders', upperFirst(dependency)),
                     (prefix + '-serviceprovider-' + dependency)
                 );
 
