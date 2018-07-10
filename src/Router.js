@@ -425,7 +425,7 @@ module.exports = class Router extends Base {
                                 'timestamp': new Date()
                             };
 
-                            this._ee.emit(eventId, eventPackage);
+                            await this._ee.emitAsync(eventId, eventPackage);
                         } catch(err) {
                             this.logger.error(err);
                             return false;
