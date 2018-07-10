@@ -344,6 +344,7 @@ module.exports = class Router extends Base {
 
                     while((routeParamsMatch = routeParamsRegex.exec(routeUri)) !== null) {
                         this.logger.debug('Router: Found route parameter %j ...', routeParamsMatch);
+                        // @flowIgnore because we check this within the while() statement
                         if(routeParamsMatch.index === routeParamsRegex.lastIndex) {
                             routeParamsRegex.lastIndex++;
                         }
