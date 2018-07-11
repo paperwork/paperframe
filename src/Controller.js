@@ -8,6 +8,7 @@ import type {
 } from './Types/Controller.t';
 
 import type {
+    EventPackage,
     EventDataType,
     EventDataTable
 } from './Types/Event.t';
@@ -21,6 +22,8 @@ module.exports = class Controller extends Base {
     _config:                    ControllerConfig
     _ctx:                       Function
     _next:                      Function
+    _ee:                        Function
+    _eventId:                   string
     _eventDataTable:            EventDataTable
 
     constructor(config: ControllerConfig) {
@@ -43,6 +46,47 @@ module.exports = class Controller extends Base {
 
     get next(): Function {
         return this._next;
+    }
+
+    set eventId(eventId: string) {
+        this._eventId = eventId;
+    }
+
+    get eventId(): string {
+        return this._eventId;
+    }
+
+    set ee(ee: Function) {
+        this._ee = ee;
+    }
+
+    async emitEventData(eventData: EventDataTable): Promise<Array<any>> {
+        if(typeof eventData === 'undefined'
+        || eventData === null
+        || eventData === {}) {
+            return [];
+        }
+
+        const eventPackage: EventPackage = {
+            'data': eventData,
+            'timestamp': new Date()
+        };
+
+        return this._ee.emitAsync(this._eventId, eventPackage);
+    }
+
+    pushEventData(eventDataId: string, eventData: EventDataType): boolean {
+        this._eventDataTable[eventDataId] = eventData;
+        return true;
+    }
+
+    flushEventData(): boolean {
+        this._eventDataTable = {};
+        return true;
+    }
+
+    readEventData(): EventDataTable {
+        return this._eventDataTable;
     }
 
     get remoteAddress(): string {
@@ -112,20 +156,6 @@ module.exports = class Controller extends Base {
         }
 
         return null;
-    }
-
-    pushEventData(eventDataId: string, eventData: EventDataType): boolean {
-        this._eventDataTable[eventDataId] = eventData;
-        return true;
-    }
-
-    flushEventData(): boolean {
-        this._eventDataTable = {};
-        return true;
-    }
-
-    readEventData(): EventDataTable {
-        return this._eventDataTable;
     }
 
     _notImplementedNull(params: ControllerParams): nullPromise {

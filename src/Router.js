@@ -386,8 +386,15 @@ module.exports = class Router extends Base {
                             return false;
                         }
 
+                        const eventSource = 'API';
+                        const eventResource = routeResource.toUpperCase();
+                        const eventName = routeName.toUpperCase();
+                        const eventId = eventSource + '.' + eventResource + '.' + eventName;
+
                         controllerInstance.ctx = ctx;
                         controllerInstance.next = next;
+                        controllerInstance.ee = this._ee;
+                        controllerInstance.eventId = eventId;
                         this.logger.debug('Router: %s ("%s") calling %s (%s) on %s ...', controllerInstance.remoteAddress, controllerInstance.remoteUserAgent, routeName, routeAction, routeUri);
 
                         let controllerParams: ControllerParams = {
@@ -415,17 +422,8 @@ module.exports = class Router extends Base {
                         try {
                             let controllerReturn = await handler.bind(controllerInstance)(controllerParams);
 
-                            const eventSource = 'API';
-                            const eventResource = routeResource.toUpperCase();
-                            const eventName = routeName.toUpperCase();
-
-                            const eventId = eventSource + '.' + eventResource + '.' + eventName;
-                            const eventPackage: EventPackage = {
-                                'data': controllerInstance.readEventData(),
-                                'timestamp': new Date()
-                            };
-
-                            await this._ee.emitAsync(eventId, eventPackage);
+                            const eventData: EventDataTable = controllerInstance.readEventData();
+                            await controllerInstance.emitEventData(eventData);
                         } catch(err) {
                             this.logger.error(err);
                             return false;
