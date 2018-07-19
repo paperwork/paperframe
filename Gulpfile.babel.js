@@ -26,7 +26,7 @@ function errorHandler(err) {
 }
 
 gulp.task('default', cb => {
-    run('lint', 'flowtype', 'build', cb);
+    run('lint', 'flowtype', 'build', 'flowcopy', cb);
 });
 
 gulp.task('build', cb => {
@@ -46,6 +46,8 @@ gulp.task('lint', cb => {
 });
 
 gulp.task('flowtype', shell.task(['npm run flow check --show-all-errors']));
+
+gulp.task('flowcopy', shell.task(['npm run flow:copy']));
 
 gulp.task('babel', cb => {
     gulp.src([CONFIG.js.src])
