@@ -18,12 +18,12 @@ const endsWith = require('lodash').endsWith;
 import type {
     ControllerConfig,
     ControllerParams
-} from './Types/Controller.t';
+} from './Controller';
 
 import type {
     EventDataTable,
     EventPackage
-} from './Types/Event.t';
+} from './Event';
 
 type RoutingTableEntry = {
     name: string,

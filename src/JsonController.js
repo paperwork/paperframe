@@ -3,7 +3,7 @@
 
 import type {
     ControllerDependenciesDefinition
-} from './Types/Controller.t';
+} from './Controller';
 
 const Controller = require('./Controller');
 

@@ -3,7 +3,7 @@
 
 import type {
     ControllerConfig
-} from './Types/Controller.t';
+} from './Controller';
 
 const Base = require('./Base');
 
