@@ -18,8 +18,13 @@ module.exports = class Base {
             const packageRequire = require(pkg);
             return packageRequire;
         } catch(err) {
-            this.logger.debug('Router: %s could not be loaded:', pkg);
-            this.logger.debug(err);
+            if(err.code === 'MODULE_NOT_FOUND') {
+                this.logger.debug('Router: %s not found.', pkg);
+            } else {
+                this.logger.error('Router: %s could not be loaded:', pkg);
+                this.logger.error(err);
+            }
+
             return null;
         }
     }
