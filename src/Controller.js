@@ -29,6 +29,8 @@ export type ControllerParams = {
     body: Object
 };
 
+export type ControllerParamsReturn = Promise<ControllerParams>;
+
 export type ControllerBeforeReturn = Promise<any>;
 
 export type ControllerActionReturn = Promise<any>;
