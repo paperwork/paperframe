@@ -2,6 +2,7 @@
 
 /* Generic numbers */
 module.exports.EMPTY = 0;
+module.exports.ZERO = 0;
 module.exports.ONE = 1;
 module.exports.FIRST = 0;
 
