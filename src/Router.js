@@ -507,33 +507,19 @@ module.exports = class Router extends Base {
 
     authorization(routesAcl: Object): Function {
         return async (ctx, next) => {
-            if(typeof this._jwt === 'undefined'
-            || this._jwt === null) {
+            if(this._authorizationHasJwt() === false) {
                 return next();
             }
 
             const url = ctx.url;
-            const requestMethod = ctx.request.method;
-            const matchedPaths = this._router.match(url).path;
+            const matchedPaths = this._authorizationGetMatchedPaths(url);
 
-            if(typeof matchedPaths === 'undefined'
-            || matchedPaths === null
-            || matchedPaths.length === [].length) {
+            if(matchedPaths === null) {
                 return next();
             }
 
-            let requestRoute: ?string = null;
-            let requestResource: ?string;
-            const methodNotFound = -1;
-            forEach(matchedPaths, matchedPath => {
-                if(indexOf(matchedPath.methods, requestMethod) !== methodNotFound) {
-                    requestRoute = matchedPath.path;
-                    requestResource = matchedPath.name;
-                    return false;
-                }
-
-                return true;
-            });
+            const requestMethod = ctx.request.method;
+            const { requestRoute, requestResource } = this._authorizationReqRouteRes(requestMethod, matchedPaths);
 
             if(requestRoute === null) {
                 return next();
@@ -541,14 +527,8 @@ module.exports = class Router extends Base {
 
             const httpMethod: string = ctx.method.toLowerCase();
             const firstElement: number = 0;
-            const method = this.routingTable(requestResource).filter((entry: RoutingTableEntry) => {
-                if(entry.action === httpMethod
-                && endsWith(requestRoute, entry.route)) {
-                    return true;
-                }
-
-                return false;
-            })[firstElement].name;
+            const methods = this._authorizationGetMethods(httpMethod, requestRoute, requestResource);
+            const method = methods[firstElement].name;
 
             if(routesAcl.hasOwnProperty(requestResource)
             && routesAcl[requestResource].hasOwnProperty(method)
@@ -559,6 +539,58 @@ module.exports = class Router extends Base {
             // @flowIgnore because flow doesn't seem to notice the undefined/null check at the beginning.
             return this._jwt({ secret: this._jwtSecret })(ctx, next);
         };
+    }
+
+    _authorizationHasJwt(): boolean {
+        if(typeof this._jwt === 'undefined'
+        || this._jwt === null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    _authorizationGetMatchedPaths(fromUrl: string): Array<Object>|null {
+        const matchedPaths = this._router.match(fromUrl).path;
+
+        if(typeof matchedPaths === 'undefined'
+        || matchedPaths === null
+        || matchedPaths.length === [].length) {
+            return null;
+        }
+
+        return matchedPaths;
+    }
+
+    _authorizationReqRouteRes(requestMethod: string, matchedPaths: Array<Object>): Object {
+        let requestRoute: string|null = null;
+        let requestResource: string|null;
+        const methodNotFound = -1;
+        forEach(matchedPaths, matchedPath => {
+            if(indexOf(matchedPath.methods, requestMethod) !== methodNotFound) {
+                requestRoute = matchedPath.path;
+                requestResource = matchedPath.name;
+                return false;
+            }
+
+            return true;
+        });
+
+        return {
+            'requestRoute': requestRoute,
+            'requestResource': requestResource
+        };
+    }
+
+    _authorizationGetMethods(httpMethod: string, requestRoute: string, requestResource: string): Array<Object> {
+        return this.routingTable(requestResource).filter((entry: RoutingTableEntry) => {
+            if(entry.action === httpMethod
+            && endsWith(requestRoute, entry.route)) {
+                return true;
+            }
+
+            return false;
+        });
     }
 
     routes() {
