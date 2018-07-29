@@ -399,75 +399,93 @@ module.exports = class Router extends Base {
                         }
                     }
 
-                    let routeAcl = { 'protected': false };
-
-                    if(controllerInstance.hasOwnProperty('routeAcl') === true
-                    && controllerInstance.routeAcl.hasOwnProperty(routeName) === true) {
-                        routeAcl = controllerInstance.routeAcl[routeName];
-                    }
+                    const routeAcl = this._getRouteAcl(routeName, controllerInstance);
 
                     // @flowIgnore access on computed type.
                     this._router[routeAction](routeResource, routeUri, async (ctx, next) => {
-                        const xClientPrefix = `x-${process.env.SERVICE_PREFIX || 'paperframe'}-client`;
-                        if((ctx.request.header.hasOwnProperty(xClientPrefix) === false
-                        || ctx.request.header.hasOwnProperty(`${xClientPrefix}-version`) === false
-                        || ctx.request.header.hasOwnProperty(`${xClientPrefix}-api-version`) === false)
-                        && (typeof routeAcl === 'undefined' || routeAcl.protected === true)) {
-                            const errorMessage = `Client did not send required ${xClientPrefix} / ${xClientPrefix}-version / ${xClientPrefix}-api-version headers.`;
-                            this.logger.error('Router: %s', errorMessage);
-                            ctx.status = HttpStatus.BAD_REQUEST;
-                            ctx.body = errorMessage;
-                            return false;
-                        }
-
-                        const eventSource = 'API';
-                        const eventResource = routeResource.toUpperCase();
-                        const eventName = routeName.toUpperCase();
-                        const eventId = eventSource + '.' + eventResource + '.' + eventName;
-
-                        controllerInstance.ctx = ctx;
-                        controllerInstance.next = next;
-                        controllerInstance.ee = this._ee;
-                        controllerInstance.eventId = eventId;
-                        this.logger.debug('Router: %s ("%s") calling %s (%s) on %s ...', controllerInstance.remoteAddress, controllerInstance.remoteUserAgent, routeName, routeAction, routeUri);
-
-                        let controllerParams: ControllerParams = {
-                            'session': controllerInstance.session,
-                            'before': null,
-                            'parameters': ctx.parameters,
-                            'query': ctx.query,
-                            'headers': ctx.request.header,
-                            'body': controllerInstance.body
-                        };
-
-                        this.logger.debug('Router: Passing the following controller parameters: %j', controllerParams);
-
-                        // Do we have a before*-handler?
-                        if(typeof beforeHandler === 'function') {
-                            try {
-                                this.logger.debug('Router: Awaiting beforeHandler and overwriting controller parameters ...');
-                                controllerParams = await beforeHandler.bind(controllerInstance)(controllerParams);
-                            } catch(err) {
-                                this.logger.error(err);
-                                return false;
-                            }
-                        }
-
-                        try {
-                            let controllerReturn = await handler.bind(controllerInstance)(controllerParams);
-
-                            const eventData: EventDataTable = controllerInstance.readEventData();
-                            await controllerInstance.emitEventData(eventData);
-                        } catch(err) {
-                            this.logger.error(err);
-                            return false;
-                        }
-
-                        return true;
+                        return this._handleRequest(handler, controllerInstance, beforeHandler, ctx, next, routeAcl, routeName, routeResource, routeAction, routeUri);
                     });
                 }
             });
         });
+
+        return true;
+    }
+
+    _getRouteAcl(routeName: string, controllerInstance: Function): Object {
+        let routeAcl = { 'protected': false };
+
+        if(controllerInstance.hasOwnProperty('routeAcl') === true
+        && controllerInstance.routeAcl.hasOwnProperty(routeName) === true) {
+            routeAcl = controllerInstance.routeAcl[routeName];
+        }
+
+        return routeAcl;
+    }
+
+    async _handleRequest(handler: Function, controllerInstance: Function, beforeHandler: Function, ctx: Object, next: any, routeAcl: Object, routeName: string, routeResource: string, routeAction: string, routeUri: string) {
+        if(await this._requestHasRequiredHeaders(ctx, routeAcl) === false) {
+            return false;
+        }
+
+        const eventSource = 'API';
+        const eventResource = routeResource.toUpperCase();
+        const eventName = routeName.toUpperCase();
+        const eventId = eventSource + '.' + eventResource + '.' + eventName;
+
+        controllerInstance.ctx = ctx;
+        controllerInstance.next = next;
+        controllerInstance.ee = this._ee;
+        controllerInstance.eventId = eventId;
+        this.logger.debug('Router: %s ("%s") calling %s (%s) on %s ...', controllerInstance.remoteAddress, controllerInstance.remoteUserAgent, routeName, routeAction, routeUri);
+
+        let controllerParams: ControllerParams = {
+            'session': controllerInstance.session,
+            'before': null,
+            'parameters': ctx.parameters,
+            'query': ctx.query,
+            'headers': ctx.request.header,
+            'body': controllerInstance.body
+        };
+
+        this.logger.debug('Router: Passing the following controller parameters: %j', controllerParams);
+
+        // Do we have a before*-handler?
+        if(typeof beforeHandler === 'function') {
+            try {
+                this.logger.debug('Router: Awaiting beforeHandler and overwriting controller parameters ...');
+                controllerParams = await beforeHandler.bind(controllerInstance)(controllerParams);
+            } catch(err) {
+                this.logger.error(err);
+                return false;
+            }
+        }
+
+        try {
+            let controllerReturn = await handler.bind(controllerInstance)(controllerParams);
+
+            const eventData: EventDataTable = controllerInstance.readEventData();
+            await controllerInstance.emitEventData(eventData);
+        } catch(err) {
+            this.logger.error(err);
+            return false;
+        }
+
+        return true;
+    }
+
+    async _requestHasRequiredHeaders(ctx: Object, routeAcl: Object): Promise<boolean> {
+        const xClientPrefix = `x-${process.env.SERVICE_PREFIX || 'paperframe'}-client`;
+        if((ctx.request.header.hasOwnProperty(xClientPrefix) === false
+        || ctx.request.header.hasOwnProperty(`${xClientPrefix}-version`) === false
+        || ctx.request.header.hasOwnProperty(`${xClientPrefix}-api-version`) === false)
+        && (typeof routeAcl === 'undefined' || routeAcl.protected === true)) {
+            const errorMessage = `Client did not send required ${xClientPrefix} / ${xClientPrefix}-version / ${xClientPrefix}-api-version headers.`;
+            this.logger.error('Router: %s', errorMessage);
+            ctx.status = HttpStatus.BAD_REQUEST;
+            ctx.body = errorMessage;
+            return false;
+        }
 
         return true;
     }
