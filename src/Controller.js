@@ -1,5 +1,7 @@
 //@flow
 
+const EventEmitter = require('eventemitter2').EventEmitter2;
+
 export type ControllerDependenciesDefinition = Array<string>;
 
 export type ControllerDependency = {
@@ -62,7 +64,7 @@ module.exports = class Controller extends Base {
     _config:                    ControllerConfig
     _ctx:                       Function
     _next:                      Function
-    _ee:                        Function
+    _ee:                        EventEmitter
     _eventId:                   string
     _eventDataTable:            EventDataTable
 
@@ -96,7 +98,7 @@ module.exports = class Controller extends Base {
         return this._eventId;
     }
 
-    set ee(ee: Function) {
+    set ee(ee: EventEmitter) {
         this._ee = ee;
     }
 
