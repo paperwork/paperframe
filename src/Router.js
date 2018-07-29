@@ -362,8 +362,8 @@ module.exports = class Router extends Base {
             forEach(this.routingTable(controllerResource), (routingEntry: RoutingTableEntry) => {
                 const controllerRoute = controllerTableEntry.route;
                 const controllerInstance = controllerTableEntry.instance;
-                const beforeHandler: Promise<any> = controllerInstance['before' + capitalize(routingEntry.name)];
-                const handler: Promise<any> = controllerInstance[routingEntry.name];
+                const beforeHandler: Function = controllerInstance['before' + capitalize(routingEntry.name)];
+                const handler: Function = controllerInstance[routingEntry.name];
 
                 if(typeof handler === 'function') {
                     const routeName = routingEntry.name;
