@@ -102,6 +102,10 @@ module.exports = class Controller extends Base {
         this._ee = ee;
     }
 
+    get ee(): EventEmitter {
+        return this._ee;
+    }
+
     async emitEventData(eventData: EventDataTable): Promise<Array<any>> {
         if(typeof eventData === 'undefined'
         || eventData === null
