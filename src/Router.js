@@ -338,6 +338,7 @@ module.exports = class Router extends Base {
 
                 const serviceProvider = new ServiceProviderRequire();
                 serviceProvider.logger = this.logger;
+                serviceProvider.ee = this._ee;
 
                 if(typeof serviceProvider.initialize === 'function') {
                     serviceProvider.initialize();
