@@ -145,17 +145,33 @@ module.exports = class Controller extends Base {
     }
 
     get session(): Object {
-        if(typeof this._ctx !== 'undefined'
-        && this._ctx !== null
-        && this._ctx.hasOwnProperty('state')
-        && typeof this._ctx.state === 'object'
-        && this._ctx.state.hasOwnProperty('user')
-        && typeof this._ctx.state.user === 'object'
+        if(this._ctxHasState(this._ctx) === true
+        && this._ctxStateHasUser(this.ctx.state) === true
         && this._ctx.state.user.hasOwnProperty('session')) {
             return this._ctx.state.user.session;
         }
 
         return {};
+    }
+
+    _ctxHasState(ctx: Object): boolean {
+        if(typeof this._ctx !== 'undefined'
+        && this._ctx !== null
+        && this._ctx.hasOwnProperty('state')
+        && typeof this._ctx.state === 'object') {
+            return true;
+        }
+
+        return false;
+    }
+
+    _ctxStateHasUser(ctxState: Object): boolean {
+        if(ctxState.hasOwnProperty('user')
+        && typeof ctxState.user === 'object') {
+            return true;
+        }
+
+        return false;
     }
 
     get body(): ?any {
