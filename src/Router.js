@@ -323,7 +323,7 @@ module.exports = class Router extends Base {
         let serviceProvidersTable: ServiceProvidersTable = {};
 
         forEach(dependenciesArray, (dependency: string) => {
-            if(!this._serviceProviders.hasOwnProperty(dependency)) {
+            if(this._serviceProviders.hasOwnProperty(dependency) === false) {
                 this.logger.debug('Router: Initializing new dependency %s ...', dependency);
                 let ServiceProviderRequire = this.loadExtensionFallback(
                     path.join(this._dirname, 'ServiceProviders', upperFirst(dependency)),
