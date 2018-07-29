@@ -82,6 +82,16 @@ module.exports = class Router extends Base {
             throw new Error('Router: No options specified.');
         }
 
+        this._initRouter(options);
+        this._initJwt(options);
+        this._initLogger(options);
+        this._initDirname(options);
+        this._initEventEmitter(options);
+
+        this._initInstanceVariables();
+    }
+
+    _initRouter(options: Object): boolean {
         // [x] Check for router
         if(options.hasOwnProperty('koaRouter') === false) {
             throw new Error('Router: No KOA router given.');
@@ -90,6 +100,10 @@ module.exports = class Router extends Base {
         // eslint-disable-next-line new-cap
         this._router = new options.koaRouter();
 
+        return true;
+    }
+
+    _initJwt(options: Object): boolean {
         // [x] Check for JWT handler
         if(options.hasOwnProperty('jwtHandler') === false) {
             this._jwt = null;
@@ -103,14 +117,23 @@ module.exports = class Router extends Base {
             this._jwtSecret = options.jwtSecret;
         }
 
+        return true;
+    }
+
+    _initLogger(options: Object): boolean {
         // [x] Check for logger
-        // TODO: Implement console fallback?
         if(options.hasOwnProperty('logger') === false) {
-            throw new Error('Router: No logger given.');
+            console.error('Router: No logger given. Using console.');
+            // @flowIgnore callable signature
+            this.logger = console;
+        } else {
+            this.logger = options.logger;
         }
 
-        this.logger = options.logger;
+        return true;
+    }
 
+    _initDirname(options: Object): boolean {
         // [x] Check for dirname
         if(options.hasOwnProperty('dirname') === false) {
             this._dirname = process.env.SERVICE_DIRNAME || __dirname;
@@ -118,6 +141,10 @@ module.exports = class Router extends Base {
             this._dirname = options.dirname;
         }
 
+        return true;
+    }
+
+    _initEventEmitter(options: Object): boolean {
         // [x] Set up event emitter
         this._ee = new EventEmitter({
             'wildcard': true,
@@ -126,10 +153,16 @@ module.exports = class Router extends Base {
             'verboseMemoryLeak': true
         });
 
+        return true;
+    }
+
+    _initInstanceVariables(): boolean {
         // [x] Initialize modules, controllers and service providers
         this._modules = {};
         this._controllers = {};
         this._serviceProviders = {};
+
+        return true;
     }
 
     routingTable(resourceName: string = 'entity'): RoutingTable {
