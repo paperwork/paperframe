@@ -2,13 +2,13 @@
 
 
 import type {
-    ControllerDependenciesDefinition
+    TControllerDependenciesDefinition
 } from './Controller';
 
 const Controller = require('./Controller');
 
 module.exports = class JsonController extends Controller {
-    static get dependencies(): ControllerDependenciesDefinition {
+    static get dependencies(): TControllerDependenciesDefinition {
         return [
         ];
     }

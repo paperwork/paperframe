@@ -1,6 +1,6 @@
 //@flow
 
-export type EventAction =
+export type TEventAction =
     | 'index'
     | 'show'
     | 'create'
@@ -8,22 +8,22 @@ export type EventAction =
     | 'destroy';
 
 
-export type Event = {
-    action: EventAction,
+export type TEvent = {
+    action: TEventAction,
 
 };
 
-export type EventDataType =
+export type TEventData =
     | string
     | Object;
 
-export type EventDataTable = {
-    [key: string]: EventDataType
+export type TEventDataTable = {
+    [key: string]: TEventData
 };
 
-export type EventId = string;
+export type TEventId = string;
 
-export type EventPackage = {
-    'data': EventDataTable,
+export type TEventPackage = {
+    'data': TEventDataTable,
     'timestamp': Date
 };

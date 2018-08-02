@@ -16,13 +16,13 @@ const indexOf = require('lodash').indexOf;
 const endsWith = require('lodash').endsWith;
 
 import type {
-    ControllerConfig,
-    ControllerParams
+    TControllerConfig,
+    TControllerParams
 } from './Controller';
 
 import type {
-    EventDataTable,
-    EventPackage
+    TEventDataTable,
+    TEventPackage
 } from './Event';
 
 type RoutingTableEntry = {
@@ -292,7 +292,7 @@ module.exports = class Router extends Base {
                 throw new Error('Router: Controller does not provide a route. Aborting!');
             }
 
-            const controllerConfig: ControllerConfig = {
+            const controllerConfig: TControllerConfig = {
                 'dependencies': serviceProviders,
                 'collections': this._collections
             };
@@ -303,7 +303,7 @@ module.exports = class Router extends Base {
             // Check for and attach event handler
             if(typeof controllerInstance.eventListener === 'string'
             && typeof controllerInstance.onEvent === 'function') {
-                this._ee.on(controllerInstance.eventListener, function(eventPackage: EventPackage) {
+                this._ee.on(controllerInstance.eventListener, function(eventPackage: TEventPackage) {
                     // eslint-disable-next-line no-invalid-this
                     return controllerInstance.onEvent(this.event, eventPackage);
                 });
@@ -439,7 +439,7 @@ module.exports = class Router extends Base {
         controllerInstance.eventId = eventId;
         this.logger.debug('Router: %s ("%s") calling %s (%s) on %s ...', controllerInstance.remoteAddress, controllerInstance.remoteUserAgent, routeName, routeAction, routeUri);
 
-        let controllerParams: ControllerParams = {
+        let controllerParams: TControllerParams = {
             'session': controllerInstance.session,
             'before': null,
             'parameters': ctx.parameters,
@@ -464,7 +464,7 @@ module.exports = class Router extends Base {
         try {
             let controllerReturn = await handler.bind(controllerInstance)(controllerParams);
 
-            const eventData: EventDataTable = controllerInstance.readEventData();
+            const eventData: TEventDataTable = controllerInstance.readEventData();
             await controllerInstance.emitEventData(eventData);
         } catch(err) {
             this.logger.error(err);

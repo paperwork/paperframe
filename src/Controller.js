@@ -2,27 +2,27 @@
 
 const EventEmitter = require('eventemitter2').EventEmitter2;
 
-export type ControllerDependenciesDefinition = Array<string>;
+export type TControllerDependenciesDefinition = Array<string>;
 
-export type ControllerDependency = {
+export type TControllerDependency = {
     id: string,
     instance: Function
 };
 
-export type ControllerDependencies = {
-    [key: string]: ControllerDependency
+export type TControllerDependencies = {
+    [key: string]: TControllerDependency
 };
 
-export type ControllerCollections = {
+export type TControllerCollections = {
     [key: string]: Function
 };
 
-export type ControllerConfig = {
-    dependencies: ControllerDependencies,
-    collections: ControllerCollections
+export type TControllerConfig = {
+    dependencies: TControllerDependencies,
+    collections: TControllerCollections
 };
 
-export type ControllerParams = {
+export type TControllerParams = {
     session: Object, // TODO: define type
     before: ?Object,
     parameters: Object,
@@ -31,28 +31,28 @@ export type ControllerParams = {
     body: Object
 };
 
-export type ControllerParamsReturn = Promise<ControllerParams>;
+export type TControllerParamsReturn = Promise<TControllerParams>;
 
-export type ControllerBeforeReturn = Promise<any>;
+export type TControllerBeforeReturn = Promise<TControllerParams>;
 
-export type ControllerActionReturn = Promise<any>;
+export type TControllerActionReturn = Promise<TControllerParams>;
 
-export type ControllerRouteAclEntry = {
+export type TControllerRouteAclEntry = {
     protected: boolean
 };
 
-export type ControllerRouteAclTable = {
-    index?: ControllerRouteAclEntry,
-    show?: ControllerRouteAclEntry,
-    create?: ControllerRouteAclEntry,
-    update?: ControllerRouteAclEntry,
-    destroy?: ControllerRouteAclEntry,
+export type TControllerRouteAclTable = {
+    index?: TControllerRouteAclEntry,
+    show?: TControllerRouteAclEntry,
+    create?: TControllerRouteAclEntry,
+    update?: TControllerRouteAclEntry,
+    destroy?: TControllerRouteAclEntry,
 };
 
 import type {
-    EventPackage,
-    EventDataType,
-    EventDataTable
+    TEventPackage,
+    TEventData,
+    TEventDataTable
 } from './Event';
 
 type nullPromise = Promise<null>;
@@ -61,14 +61,14 @@ type errorPromise = Promise<string>;
 const Base = require('./Base');
 
 module.exports = class Controller extends Base {
-    _config:                    ControllerConfig
+    _config:                    TControllerConfig
     _ctx:                       Function
     _next:                      Function
     _ee:                        EventEmitter
     _eventId:                   string
-    _eventDataTable:            EventDataTable
+    _eventDataTable:            TEventDataTable
 
-    constructor(config: ControllerConfig) {
+    constructor(config: TControllerConfig) {
         super();
         this._config = config;
         this.flushEventData();
@@ -106,14 +106,14 @@ module.exports = class Controller extends Base {
         return this._ee;
     }
 
-    async emitEventData(eventData: EventDataTable): Promise<Array<any>> {
+    async emitEventData(eventData: TEventDataTable): Promise<Array<any>> {
         if(typeof eventData === 'undefined'
         || eventData === null
         || eventData === {}) {
             return [];
         }
 
-        const eventPackage: EventPackage = {
+        const eventPackage: TEventPackage = {
             'data': eventData,
             'timestamp': new Date()
         };
@@ -121,7 +121,7 @@ module.exports = class Controller extends Base {
         return this._ee.emitAsync(this._eventId, eventPackage);
     }
 
-    pushEventData(eventDataId: string, eventData: EventDataType): boolean {
+    pushEventData(eventDataId: string, eventData: TEventData): boolean {
         this._eventDataTable[eventDataId] = eventData;
         return true;
     }
@@ -131,7 +131,7 @@ module.exports = class Controller extends Base {
         return true;
     }
 
-    readEventData(): EventDataTable {
+    readEventData(): TEventDataTable {
         return this._eventDataTable;
     }
 
@@ -220,13 +220,13 @@ module.exports = class Controller extends Base {
         return null;
     }
 
-    _notImplementedNull(params: ControllerParams): nullPromise {
+    _notImplementedNull(params: TControllerParams): nullPromise {
         return new Promise((fulfill, reject) => {
             fulfill(null);
         });
     }
 
-    _notImplementedError(params: ControllerParams): errorPromise {
+    _notImplementedError(params: TControllerParams): errorPromise {
         return new Promise((fulfill, reject) => {
             this.ctx.body = 'Not implemented';
             this.ctx.code = 404;
@@ -239,43 +239,43 @@ module.exports = class Controller extends Base {
      * check won't function anymore, resulting in weird effects.
      */
     /*
-    async beforeIndex(params: ControllerParams): ControllerBeforeReturn {
+    async beforeIndex(params: TControllerParams): TControllerBeforeReturn {
         return this._notImplementedNull(params);
     }
 
-    async index(params: ControllerParams): ControllerActionReturn {
+    async index(params: TControllerParams): TControllerActionReturn {
         return this._notImplementedError(params);
     }
 
-    async beforeCreate(params: ControllerParams): ControllerBeforeReturn {
+    async beforeCreate(params: TControllerParams): TControllerBeforeReturn {
         return this._notImplementedNull(params);
     }
 
-    async create(params: ControllerParams): ControllerActionReturn {
+    async create(params: TControllerParams): TControllerActionReturn {
         return this._notImplementedError(params);
     }
 
-    async beforeShow(params: ControllerParams): ControllerBeforeReturn {
+    async beforeShow(params: TControllerParams): TControllerBeforeReturn {
         return this._notImplementedNull(params);
     }
 
-    async show(params: ControllerParams): ControllerActionReturn {
+    async show(params: TControllerParams): TControllerActionReturn {
         return this._notImplementedError(params);
     }
 
-    async beforeUpdate(params: ControllerParams): ControllerBeforeReturn {
+    async beforeUpdate(params: TControllerParams): TControllerBeforeReturn {
         return this._notImplementedNull(params);
     }
 
-    async update(params: ControllerParams): ControllerActionReturn {
+    async update(params: TControllerParams): TControllerActionReturn {
         return this._notImplementedError(params);
     }
 
-    async beforeDestroy(params: ControllerParams): ControllerBeforeReturn {
+    async beforeDestroy(params: TControllerParams): TControllerBeforeReturn {
         return this._notImplementedNull(params);
     }
 
-    async destroy(params: ControllerParams): ControllerActionReturn {
+    async destroy(params: TControllerParams): TControllerActionReturn {
         return this._notImplementedError(params);
     }
     */

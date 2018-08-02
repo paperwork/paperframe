@@ -4,7 +4,7 @@ const EventEmitter = require('eventemitter2').EventEmitter2;
 const Base = require('./Base');
 
 import type {
-    ControllerConfig
+    TControllerConfig
 } from './Controller';
 
 
