@@ -2,7 +2,9 @@
 
 
 import type {
-    TControllerDependenciesDefinition
+    TControllerDependenciesDefinition,
+    TControllerParams,
+    TControllerActionReturn
 } from './Controller';
 
 const Controller = require('./Controller');
@@ -36,5 +38,15 @@ module.exports = class JsonController extends Controller {
         });
 
         return true;
+    }
+
+    async return(params: TControllerParams, httpCode: number, statusCode: number, response: Object): TControllerActionReturn {
+        const success: boolean = this.response(httpCode, statusCode, response);
+
+        if(success === false) {
+            throw new Error('No active ctx available!');
+        }
+
+        return params;
     }
 };
