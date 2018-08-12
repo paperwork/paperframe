@@ -13,15 +13,15 @@ module.exports = class JsonController extends Controller {
         ];
     }
 
-    response(httpCode: number, statusCode: number, response: Object) {
-        const millisecondsPerSecond = 1000;
+    response(httpCode: number, statusCode: number, response: Object): boolean {
+        const millisecondsPerSecond: number = 1000;
         const ctx = this.ctx;
 
         if(typeof ctx === 'undefined' || ctx === null) {
             return false;
         }
 
-        let resp = {
+        let resp: Object = { // TODO: Make this a specific type
             'code': statusCode,
             'response': response,
             'timestamp': Math.floor(new Date() / millisecondsPerSecond)
