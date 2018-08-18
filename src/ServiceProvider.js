@@ -11,7 +11,7 @@ import type {
 module.exports = class ServiceProvider extends Base {
     _ee:                        EventEmitter
 
-    initialize() {
+    async initialize(): Promise<boolean> {
         return true;
     }
 

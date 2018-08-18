@@ -11,7 +11,7 @@ module.exports = class DatabaseServiceProvider extends ServiceProvider {
     _driverRequire:             Function
     _driver:                    any
 
-    initialize() {
+    async initialize(): Promise<boolean> {
         const prefix = process.env.SERVICE_PREFIX || 'paperframe';
         const dirname = process.env.SERVICE_DIRNAME || __dirname;
 
@@ -39,9 +39,7 @@ module.exports = class DatabaseServiceProvider extends ServiceProvider {
 
         this._driver = new this._driverRequire();
         this._driver.logger = this.logger;
-        this._driver.initialize();
-
-        return true;
+        return this._driver.initialize();
     }
 
     get driver(): Object {

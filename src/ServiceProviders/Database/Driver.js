@@ -5,7 +5,7 @@ const Base = require('../../Base');
 module.exports = class Driver extends Base {
     _client:                    Function
 
-    initialize(): boolean {
+    async initialize(): Promise<boolean> {
         return false;
     }
 
