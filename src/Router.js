@@ -5,6 +5,7 @@ const path = require('path');
 const EventEmitter = require('eventemitter2').EventEmitter2;
 
 const Base = require('./Base');
+const Controller = require('./Controller');
 const HttpStatus = require('http-status-codes');
 const Common = require('./Common');
 
@@ -25,32 +26,32 @@ import type {
     TEventPackage
 } from './Event';
 
-type RoutingTableEntry = {
+type TRoutingTableEntry = {
     name: string,
     action: string,
     route: string
 };
-type RoutingTable = Array<RoutingTableEntry>;
+type TRoutingTable = Array<TRoutingTableEntry>;
 
-type CollectionsTable = {
+type TCollectionsTable = {
     [key: string]: Function
 };
 
-type ModulesTable = {
+type TModulesTable = {
     [key: string]: Function
 };
 
-type ControllerTableEntry = {
+type TControllersTableEntry = {
     route: string,
-    instance: any
+    instance: Controller
 };
 
-type ControllersTable = {
-    [key: string]: ControllerTableEntry
+type TControllersTable = {
+    [key: string]: TControllersTableEntry
 };
 
-type ServiceProvidersTable = {
-    [key: string]: any
+type TServiceProvidersTable = {
+    [key: string]: Function
 };
 
 /**
@@ -63,10 +64,10 @@ module.exports = class Router extends Base {
     _jwt:                       ?Function
     _jwtSecret:                 string
     _ee:                        EventEmitter
-    _collections:               CollectionsTable
-    _modules:                   ModulesTable
-    _controllers:               ControllersTable
-    _serviceProviders:          ServiceProvidersTable
+    _collections:               TCollectionsTable
+    _modules:                   TModulesTable
+    _controllers:               TControllersTable
+    _serviceProviders:          TServiceProvidersTable
     _dirname:                   string
 
     /**
@@ -165,7 +166,7 @@ module.exports = class Router extends Base {
         return true;
     }
 
-    routingTable(resourceName: string = 'entity'): RoutingTable {
+    routingTable(resourceName: string = 'entity'): TRoutingTable {
         return [
             { 'name': 'index',   'action': 'get',    'route': '/'                   }, // GET       => INDEX
             { 'name': 'create',  'action': 'post',   'route': '/'                   }, // POST      => CREATE
@@ -175,7 +176,7 @@ module.exports = class Router extends Base {
         ];
     }
 
-    initialize() {
+    async initialize(): Promise<boolean> {
         // Collections
         const serverCollections: ?string = process.env.SERVER_COLLECTIONS;
 
@@ -185,7 +186,7 @@ module.exports = class Router extends Base {
 
         const collectionsArray: Array<string> = serverCollections.split(',');
 
-        this._collections = this._initializeCollections(collectionsArray);
+        this._collections = await this._initializeCollections(collectionsArray);
 
         // Modules
         const serverModules: ?string = process.env.SERVER_MODULES;
@@ -196,223 +197,316 @@ module.exports = class Router extends Base {
 
         const modulesArray: Array<string> = serverModules.split(',');
 
-        this._modules = this._initializeModules(modulesArray);
+        this._modules = await this._initializeModules(modulesArray);
 
-        forEach(this._modules, (moduleRequire, moduleName) => {
+        await this._initializeControllersFromModules();
+
+        // Routes
+        return this._initializeRoutes(this._controllers);
+    }
+
+    async _initializeControllersFromModules(): Promise<boolean> {
+        const modulesKeys: Array<string> = Object.keys(this._modules);
+        const modulesKeysSize: number = modulesKeys.length;
+
+        for(let i = 0; i < modulesKeysSize; i++) {
+            const moduleName: string = modulesKeys[i];
+            const moduleRequire: Function = this._modules[moduleName];
+
             if(!moduleRequire.hasOwnProperty('controllers') || !Array.isArray(moduleRequire.controllers)) {
                 throw new Error('Router: Module does not contain controllers. Aborting!');
             }
 
             this.logger.debug('Router: Initializing controllers for module %s ...', moduleName);
-            this._controllers = merge(this._controllers, this._initializeControllers(moduleRequire.controllers));
-        });
-
-        // Routes
-        this._initializeRoutes(this._controllers);
+            const initializedControllers: TControllersTable = await this._initializeControllers(moduleRequire.controllers);
+            this._controllers = merge(this._controllers, initializedControllers);
+        }
 
         return true;
     }
 
-    _initializeCollections(collectionsArray: Array<string>): CollectionsTable {
-        const prefix = process.env.SERVICE_PREFIX || 'paperframe';
-        let collectionsTable: CollectionsTable = {};
+    async _initializeCollections(collectionsArray: Array<string>): Promise<TCollectionsTable> {
+        let collectionsTable: TCollectionsTable = {};
 
-        forEach(collectionsArray, (collection: string) => {
-            if(collection.length === Common.EMPTY) {
-                this.logger.debug('Router: Not initializing collections, because there are none.');
-                return false;
+        if(typeof collectionsArray !== 'object'
+        || collectionsArray === null) {
+            return collectionsTable;
+        }
+
+        const collectionsArraySize: number = collectionsArray.length;
+        for(let i = 0; i < collectionsArraySize; i++) {
+            const collection: string = collectionsArray[i];
+
+            const collectionRequire: Function|null = await this._initializeCollection(collection);
+
+            if(collectionRequire !== null) {
+                collectionsTable[collection] = collectionRequire;
             }
-
-            this.logger.debug('Router: Initializing collection %s ...', collection);
-
-            let collectionRequire = this.loadExtension(
-                path.join(this._dirname, 'Collections', upperFirst(collection)),
-                (prefix + '-collection-' + collection)
-            );
-
-            if(typeof collectionRequire === 'undefined'
-            || collectionRequire === null) {
-                throw new Error('Router: Module could not be initialized. Aborting!');
-            }
-
-            collectionsTable[collection] = collectionRequire;
-
-            return true;
-        });
+        }
 
         return collectionsTable;
     }
 
-    _initializeModules(modulesArray: Array<string>): ModulesTable {
+    async _initializeCollection(collection: string): Promise<Function|null> {
         const prefix = process.env.SERVICE_PREFIX || 'paperframe';
-        let modulesTable: ModulesTable = {};
 
-        forEach(modulesArray, (module: string) => {
-            if(module.length === Common.EMPTY) {
-                this.logger.debug('Router: Not initializing modules, because there are none.');
-                return false;
+        if(collection.length === Common.EMPTY) {
+            this.logger.debug('Router: Not initializing collection, because it is empty.');
+            return null;
+        }
+
+        this.logger.debug('Router: Initializing collection %s ...', collection);
+
+        let collectionRequire = this.loadExtension(
+            path.join(this._dirname, 'Collections', upperFirst(collection)),
+            (prefix + '-collection-' + collection)
+        );
+
+        if(typeof collectionRequire === 'undefined'
+        || collectionRequire === null) {
+            throw new Error('Router: Module could not be initialized. Aborting!');
+        }
+
+        return collectionRequire;
+    }
+
+    async _initializeModules(modulesArray: Array<string>): Promise<TModulesTable> {
+        let modulesTable: TModulesTable = {};
+
+        if(typeof modulesArray !== 'object'
+        || modulesArray === null) {
+            return modulesTable;
+        }
+
+        const modulesArraySize: number = modulesArray.length;
+        for(let i = 0; i < modulesArraySize; i++) {
+            const module: string = modulesArray[i];
+
+            const moduleRequire: Function|null = await this._initializeModule(module);
+
+            if(moduleRequire !== null) {
+                modulesTable[module] = moduleRequire;
             }
-
-            this.logger.debug('Router: Initializing module %s ...', module);
-
-            let moduleRequire = this.loadExtension(
-                path.join(this._dirname, 'Modules', upperFirst(module)),
-                (prefix + '-module-' + module)
-            );
-
-            if(typeof moduleRequire === 'undefined'
-            || moduleRequire === null) {
-                throw new Error('Router: Module could not be initialized. Aborting!');
-            }
-
-            modulesTable[module] = moduleRequire;
-
-            return true;
-        });
+        }
 
         return modulesTable;
     }
 
-    _initializeControllers(controllersArray: Array<any>): ControllersTable {
-        let controllersTable: ControllersTable = {};
+    async _initializeModule(module: string): Promise<Function|null> {
+        const prefix = process.env.SERVICE_PREFIX || 'paperframe';
 
-        forEach(controllersArray, (Controller: any) => {
-            let serviceProviders: ServiceProvidersTable = {};
+        if(module.length === Common.EMPTY) {
+            this.logger.debug('Router: Not initializing module, because it is empty.');
+            return null;
+        }
 
-            if(typeof Controller.dependencies !== 'undefined' && Controller.dependencies !== null) {
-                this.logger.debug('Router: Initializing dependencies for controller ...');
-                serviceProviders = this._getDependencies(Controller.dependencies);
-            }
+        this.logger.debug('Router: Initializing module %s ...', module);
 
-            if(typeof Controller.resource !== 'string') {
-                throw new Error('Router: Controller does not provide a resource name. Aborting!');
-            }
+        let moduleRequire = this.loadExtension(
+            path.join(this._dirname, 'Modules', upperFirst(module)),
+            (prefix + '-module-' + module)
+        );
 
-            if(typeof Controller.route !== 'string') {
-                throw new Error('Router: Controller does not provide a route. Aborting!');
-            }
+        if(typeof moduleRequire === 'undefined'
+        || moduleRequire === null) {
+            throw new Error('Router: Module could not be initialized. Aborting!');
+        }
 
-            const controllerConfig: TControllerConfig = {
-                'dependencies': serviceProviders,
-                'collections': this._collections
-            };
+        return moduleRequire;
+    }
 
-            const controllerInstance = new Controller(controllerConfig);
-            controllerInstance.logger = this.logger;
+    async _initializeControllers(controllersArray: Array<Function>): Promise<TControllersTable> {
+        let controllersTable: TControllersTable = {};
 
-            // Check for and attach event handler
-            if(typeof controllerInstance.eventListener === 'string'
-            && typeof controllerInstance.onEvent === 'function') {
-                this._ee.on(controllerInstance.eventListener, function(eventPackage: TEventPackage) {
-                    // eslint-disable-next-line no-invalid-this
-                    return controllerInstance.onEvent(this.event, eventPackage);
-                });
-            }
+        if(typeof controllersArray !== 'object'
+        || controllersArray === null) {
+            return controllersTable;
+        }
 
-            controllersTable[Controller.resource] = {
-                'route': Controller.route,
-                'instance': controllerInstance
-            };
-        });
+        const controllersArraySize: number = controllersArray.length;
+        for(let i = 0; i < controllersArraySize; i++) {
+            const ControllerClass: Function = controllersArray[i];
+            controllersTable[ControllerClass.resource] = await this._initializeController(ControllerClass);
+        }
 
         return controllersTable;
     }
 
-    _getDependencies(dependenciesArray: Array<string>): ServiceProvidersTable {
-        const prefix = process.env.SERVICE_PREFIX || 'paperframe';
-        let serviceProvidersTable: ServiceProvidersTable = {};
+    async _initializeController(ControllerClass: Function): Promise<TControllersTableEntry> {
+        let serviceProviders: TServiceProvidersTable = {};
 
-        forEach(dependenciesArray, (dependency: string) => {
+        if(typeof ControllerClass.dependencies !== 'undefined' && ControllerClass.dependencies !== null) {
+            this.logger.debug('Router: Initializing dependencies for controller ...');
+            serviceProviders = await this._getDependencies(ControllerClass.dependencies);
+        }
+
+        if(typeof ControllerClass.resource !== 'string') {
+            throw new Error('Router: Controller does not provide a resource name. Aborting!');
+        }
+
+        if(typeof ControllerClass.route !== 'string') {
+            throw new Error('Router: Controller does not provide a route. Aborting!');
+        }
+
+        const controllerConfig: TControllerConfig = {
+            'dependencies': serviceProviders,
+            'collections': this._collections
+        };
+
+        const controllerInstance: Controller = new ControllerClass(controllerConfig);
+        controllerInstance.logger = this.logger;
+
+        // Check for and attach event handler
+        if(typeof controllerInstance.eventListener === 'string'
+        && typeof controllerInstance.onEvent === 'function') {
+            this._ee.on(controllerInstance.eventListener, function(eventPackage: TEventPackage) {
+                // eslint-disable-next-line no-invalid-this
+                return controllerInstance.onEvent(this.event, eventPackage);
+            });
+        }
+
+
+        const controllerTableEntry: TControllersTableEntry = {
+            'route': ControllerClass.route,
+            'instance': controllerInstance
+        };
+
+        return controllerTableEntry;
+    }
+
+    async _getDependencies(dependenciesArray: Array<string>): Promise<TServiceProvidersTable> {
+        let serviceProvidersTable: TServiceProvidersTable = {};
+
+        if(typeof dependenciesArray !== 'object'
+        || dependenciesArray === null) {
+            return serviceProvidersTable;
+        }
+
+        const dependenciesArraySize: number = dependenciesArray.length;
+        for(let i = 0; i < dependenciesArraySize; i++) {
+            const dependency: string = dependenciesArray[i];
+
             if(this._serviceProviders.hasOwnProperty(dependency) === false) {
-                this.logger.debug('Router: Initializing new dependency %s ...', dependency);
-                let ServiceProviderRequire = this.loadExtensionFallback(
-                    path.join(this._dirname, 'ServiceProviders', upperFirst(dependency)),
-                    path.join(__dirname, 'ServiceProviders', upperFirst(dependency)),
-                    (prefix + '-serviceprovider-' + dependency)
-                );
-
-                if(typeof ServiceProviderRequire === 'undefined'
-                || ServiceProviderRequire === null) {
-                    throw new Error('Router: Service Provider could not be loaded. Aborting!');
-                }
-
-                const serviceProvider = new ServiceProviderRequire();
-                serviceProvider.logger = this.logger;
-                serviceProvider.ee = this._ee;
-
-                if(typeof serviceProvider.initialize === 'function') {
-                    serviceProvider.initialize();
-                }
-
-                this._serviceProviders[dependency] = serviceProvider;
+                this._serviceProviders[dependency] = await this._getDependency(dependency);
             }
 
             serviceProvidersTable[dependency] = this._serviceProviders[dependency];
-        });
+        }
 
         return serviceProvidersTable;
     }
 
-    _initializeRoutes(controllersTable: ControllersTable) {
-        let activeRouteParams = [];
-        const matchNotFound = -1;
-        const matchOfParamNameIndex = 1;
+    async _getDependency(dependency: string): Promise<Function> {
+        const prefix = process.env.SERVICE_PREFIX || 'paperframe';
 
-        forEach(controllersTable, (controllerTableEntry: ControllerTableEntry, controllerResource: string) => {
-            forEach(this.routingTable(controllerResource), (routingEntry: RoutingTableEntry) => {
-                const controllerRoute = controllerTableEntry.route;
-                const controllerInstance = controllerTableEntry.instance;
-                const beforeHandler: Function = controllerInstance['before' + capitalize(routingEntry.name)];
-                const handler: Function = controllerInstance[routingEntry.name];
+        this.logger.debug('Router: Initializing new dependency %s ...', dependency);
+        let ServiceProviderRequire = this.loadExtensionFallback(
+            path.join(this._dirname, 'ServiceProviders', upperFirst(dependency)),
+            path.join(__dirname, 'ServiceProviders', upperFirst(dependency)),
+            (prefix + '-serviceprovider-' + dependency)
+        );
 
-                if(typeof handler === 'function') {
-                    const routeName = routingEntry.name;
-                    const routeAction = routingEntry.action;
-                    const routeResource = controllerResource;
-                    const routeUri = (controllerRoute + routingEntry.route);
-                    this.logger.debug('Router: Initializing %s handler for route %s at %s ...', routeName, controllerResource, routeUri);
+        if(typeof ServiceProviderRequire === 'undefined'
+        || ServiceProviderRequire === null) {
+            throw new Error('Router: Service Provider could not be loaded. Aborting!');
+        }
 
-                    const routeParamsRegex = /\:([a-zA-Z]+)/g;
+        const serviceProvider = new ServiceProviderRequire();
+        serviceProvider.logger = this.logger;
+        serviceProvider.ee = this._ee;
 
-                    let routeParamsMatch = null;
+        if(typeof serviceProvider.initialize === 'function') {
+            await serviceProvider.initialize();
+        }
 
-                    while((routeParamsMatch = routeParamsRegex.exec(routeUri)) !== null) {
-                        this.logger.debug('Router: Found route parameter %j ...', routeParamsMatch);
-                        // @flowIgnore because we check this within the while() statement
-                        if(routeParamsMatch.index === routeParamsRegex.lastIndex) {
-                            routeParamsRegex.lastIndex++;
-                        }
+        return serviceProvider;
+    }
 
-                        if(routeParamsMatch !== null && routeParamsMatch.length > [].length) {
-                            const prefixlessMatch = routeParamsMatch[matchOfParamNameIndex];
-                            if(indexOf(activeRouteParams, prefixlessMatch) === matchNotFound) {
-                                activeRouteParams.push(prefixlessMatch);
-                                this._router.param(prefixlessMatch, (value, ctx, next) => {
-                                    if(typeof ctx.parameters !== 'object' || ctx.parameters === null) {
-                                        ctx.parameters = {};
-                                    }
+    async _initializeRoutes(controllersTable: TControllersTable): Promise<boolean> {
 
-                                    ctx.parameters[prefixlessMatch] = value;
-                                    return next();
-                                });
-                            }
-                        }
-                    }
+        if(typeof controllersTable !== 'object'
+        || controllersTable === null) {
+            return false;
+        }
 
-                    const routeAcl = this._getRouteAcl(routeName, controllerInstance);
+        const controllersTableKeys: Array<string> = Object.keys(controllersTable);
+        const controllersTableKeysSize: number = controllersTableKeys.length;
+        for(let i = 0; i < controllersTableKeysSize; i++) {
+            const controllerResource: string = controllersTableKeys[i];
+            const controllerTableEntry: TControllersTableEntry = controllersTable[controllerResource];
 
-                    // @flowIgnore access on computed type.
-                    this._router[routeAction](routeResource, routeUri, async (ctx, next) => {
-                        return this._handleRequest(handler, controllerInstance, beforeHandler, ctx, next, routeAcl, routeName, routeResource, routeAction, routeUri);
-                    });
-                }
-            });
-        });
+            const routingTable: TRoutingTable = this.routingTable(controllerResource);
+            const routingTableSize: number = routingTable.length;
+
+            for(let j = 0; j < routingTableSize; j++) {
+                const routingEntry: TRoutingTableEntry = routingTable[j];
+                const success: boolean = await this._initializeRoute(controllerResource, controllerTableEntry, routingEntry);
+            }
+        }
 
         return true;
     }
 
-    _getRouteAcl(routeName: string, controllerInstance: Function): Object {
+    async _initializeRoute(controllerResource: string, controllerTableEntry: TControllersTableEntry, routingEntry: TRoutingTableEntry): Promise<boolean> {
+        let activeRouteParams = [];
+        const matchOfParamNameIndex = 1;
+        const matchNotFound = -1;
+
+        const controllerRoute: string = controllerTableEntry.route;
+        const controllerInstance: Controller = controllerTableEntry.instance;
+
+        // @flowIgnore indexer propery
+        const beforeHandler: Function = controllerInstance['before' + capitalize(routingEntry.name)];
+
+        // @flowIgnore indexer propery
+        const handler: Function = controllerInstance[routingEntry.name];
+
+        if(typeof handler === 'function') {
+            const routeName = routingEntry.name;
+            const routeAction = routingEntry.action;
+            const routeResource = controllerResource;
+            const routeUri = (controllerRoute + routingEntry.route);
+            this.logger.debug('Router: Initializing %s handler for route %s at %s ...', routeName, controllerResource, routeUri);
+
+            const routeParamsRegex = /\:([a-zA-Z]+)/g;
+
+            let routeParamsMatch = null;
+
+            while((routeParamsMatch = routeParamsRegex.exec(routeUri)) !== null) {
+                this.logger.debug('Router: Found route parameter %j ...', routeParamsMatch);
+                // @flowIgnore because we check this within the while() statement
+                if(routeParamsMatch.index === routeParamsRegex.lastIndex) {
+                    routeParamsRegex.lastIndex++;
+                }
+
+                if(routeParamsMatch !== null && routeParamsMatch.length > [].length) {
+                    const prefixlessMatch = routeParamsMatch[matchOfParamNameIndex];
+                    if(indexOf(activeRouteParams, prefixlessMatch) === matchNotFound) {
+                        activeRouteParams.push(prefixlessMatch);
+                        this._router.param(prefixlessMatch, (value, ctx, next) => {
+                            if(typeof ctx.parameters !== 'object' || ctx.parameters === null) {
+                                ctx.parameters = {};
+                            }
+
+                            ctx.parameters[prefixlessMatch] = value;
+                            return next();
+                        });
+                    }
+                }
+            }
+
+            const routeAcl = this._getRouteAcl(routeName, controllerInstance);
+
+            // @flowIgnore access on computed type.
+            this._router[routeAction](routeResource, routeUri, async (ctx, next) => {
+                return this._handleRequest(handler, controllerInstance, beforeHandler, ctx, next, routeAcl, routeName, routeResource, routeAction, routeUri);
+            });
+        }
+
+        return true;
+    }
+
+    _getRouteAcl(routeName: string, controllerInstance: Controller): Object {
         let routeAcl = { 'protected': false };
 
         if(controllerInstance.hasOwnProperty('routeAcl') === true
@@ -423,7 +517,7 @@ module.exports = class Router extends Base {
         return routeAcl;
     }
 
-    async _handleRequest(handler: Function, controllerInstance: Function, beforeHandler: Function, ctx: Object, next: any, routeAcl: Object, routeName: string, routeResource: string, routeAction: string, routeUri: string) {
+    async _handleRequest(handler: Function, controllerInstance: Controller, beforeHandler: Function, ctx: Object, next: any, routeAcl: Object, routeName: string, routeResource: string, routeAction: string, routeUri: string): Promise<boolean> {
         if(await this._requestHasRequiredHeaders(ctx, routeAcl) === false) {
             return false;
         }
@@ -601,7 +695,7 @@ module.exports = class Router extends Base {
     }
 
     _authorizationGetMethods(httpMethod: string, requestRoute: string, requestResource: string): Array<Object> {
-        return this.routingTable(requestResource).filter((entry: RoutingTableEntry) => {
+        return this.routingTable(requestResource).filter((entry: TRoutingTableEntry) => {
             if(entry.action === httpMethod
             && endsWith(requestRoute, entry.route)) {
                 return true;
