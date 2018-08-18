@@ -4,13 +4,8 @@ const EventEmitter = require('eventemitter2').EventEmitter2;
 
 export type TControllerDependenciesDefinition = Array<string>;
 
-export type TControllerDependency = {
-    id: string,
-    instance: Function
-};
-
 export type TControllerDependencies = {
-    [key: string]: TControllerDependency
+    [key: string]: Function
 };
 
 export type TControllerCollections = {
@@ -22,13 +17,17 @@ export type TControllerConfig = {
     collections: TControllerCollections
 };
 
+export type TControllerSession = {}; // TODO define session object
+
+export type TControllerBody = Object|Array<Object>|string|Array<string>|null;
+
 export type TControllerParams = {
-    session: Object, // TODO: define type
-    before: ?Object,
+    session: TControllerSession,
+    before: TControllerBody,
     parameters: Object,
     query: Object,
     headers: Object,
-    body: Object
+    body: TControllerBody
 };
 
 export type TControllerParamsReturn = Promise<TControllerParams>;
@@ -58,11 +57,31 @@ import type {
 type nullPromise = Promise<null>;
 type errorPromise = Promise<string>;
 
+export interface IController {
+    ctx: Object;
+    next: Function;
+    eventId: string;
+    ee: EventEmitter;
+    emitEventData(eventData: TEventDataTable): Promise<Array<any>>;
+    pushEventData(eventDataId: string, eventData: TEventData): boolean;
+    flushEventData(): boolean;
+    readEventData(): TEventDataTable;
+    +remoteAddress: string;
+    +remoteUserAgent: string;
+    +session: TControllerSession;
+    +body: TControllerBody;
+    $S(dependencyId: string): any;
+    $C(collectionId: string): any;
+    +routeAcl: TControllerRouteAclTable;
+    +eventListener: string;
+    onEvent(eventId: string, eventPackage: TEventPackage): Promise<boolean>;
+}
+
 const Base = require('./Base');
 
-module.exports = class Controller extends Base {
+module.exports = class Controller extends Base implements IController {
     _config:                    TControllerConfig
-    _ctx:                       Function
+    _ctx:                       Object
     _next:                      Function
     _ee:                        EventEmitter
     _eventId:                   string
@@ -74,11 +93,11 @@ module.exports = class Controller extends Base {
         this.flushEventData();
     }
 
-    set ctx(ctx: Function) {
+    set ctx(ctx: Object) {
         this._ctx = ctx;
     }
 
-    get ctx(): Function {
+    get ctx(): Object {
         return this._ctx;
     }
 
@@ -144,7 +163,7 @@ module.exports = class Controller extends Base {
         return this.ctx.req.headers['user-agent'];
     }
 
-    get session(): Object {
+    get session(): TControllerSession {
         if(this._ctxHasState(this._ctx) === true
         && this._ctxStateHasUser(this.ctx.state) === true
         && this._ctx.state.user.hasOwnProperty('session')) {
@@ -174,7 +193,7 @@ module.exports = class Controller extends Base {
         return false;
     }
 
-    get body(): ?any {
+    get body(): TControllerBody {
         if(typeof this._ctx !== 'undefined'
         && this._ctx !== null
         && this._ctx.hasOwnProperty('request')
@@ -184,7 +203,7 @@ module.exports = class Controller extends Base {
             return this._ctx.request.body;
         }
 
-        return null;
+        return {};
     }
 
     $S(dependencyId: string): any {
@@ -220,18 +239,28 @@ module.exports = class Controller extends Base {
         return null;
     }
 
-    _notImplementedNull(params: TControllerParams): nullPromise {
-        return new Promise((fulfill, reject) => {
-            fulfill(null);
-        });
+    static get dependencies(): TControllerDependenciesDefinition {
+        return [];
     }
 
-    _notImplementedError(params: TControllerParams): errorPromise {
-        return new Promise((fulfill, reject) => {
-            this.ctx.body = 'Not implemented';
-            this.ctx.code = 404;
-            fulfill('Not implemented');
-        });
+    static get resource(): string {
+        return 'undefined';
+    }
+
+    static get route(): string {
+        return '/undefined';
+    }
+
+    get routeAcl(): TControllerRouteAclTable {
+        return {};
+    }
+
+    get eventListener(): string {
+        return '**';
+    }
+
+    async onEvent(eventId: string, eventPackage: TEventPackage): Promise<boolean> {
+        return true;
     }
 
     /*
@@ -240,43 +269,33 @@ module.exports = class Controller extends Base {
      */
     /*
     async beforeIndex(params: TControllerParams): TControllerBeforeReturn {
-        return this._notImplementedNull(params);
     }
 
     async index(params: TControllerParams): TControllerActionReturn {
-        return this._notImplementedError(params);
     }
 
     async beforeCreate(params: TControllerParams): TControllerBeforeReturn {
-        return this._notImplementedNull(params);
     }
 
     async create(params: TControllerParams): TControllerActionReturn {
-        return this._notImplementedError(params);
     }
 
     async beforeShow(params: TControllerParams): TControllerBeforeReturn {
-        return this._notImplementedNull(params);
     }
 
     async show(params: TControllerParams): TControllerActionReturn {
-        return this._notImplementedError(params);
     }
 
     async beforeUpdate(params: TControllerParams): TControllerBeforeReturn {
-        return this._notImplementedNull(params);
     }
 
     async update(params: TControllerParams): TControllerActionReturn {
-        return this._notImplementedError(params);
     }
 
     async beforeDestroy(params: TControllerParams): TControllerBeforeReturn {
-        return this._notImplementedNull(params);
     }
 
     async destroy(params: TControllerParams): TControllerActionReturn {
-        return this._notImplementedError(params);
     }
     */
 };
