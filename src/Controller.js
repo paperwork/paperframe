@@ -19,7 +19,7 @@ export type TControllerConfig = {
 
 export type TControllerSession = {}; // TODO define session object
 
-export type TControllerBody = Object|Array<Object>|string|Array<string>|null;
+export type TControllerBody = Object|Array<Object|string>|string|null;
 
 export type TControllerParams = {
     session: TControllerSession,
