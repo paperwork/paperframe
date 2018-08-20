@@ -448,10 +448,6 @@ module.exports = class Router extends Base {
     }
 
     async _initializeRoute(controllerResource: string, controllerTableEntry: TControllersTableEntry, routingEntry: TRoutingTableEntry): Promise<boolean> {
-        let activeRouteParams = [];
-        const matchOfParamNameIndex = 1;
-        const matchNotFound = -1;
-
         const controllerRoute: string = controllerTableEntry.route;
         const controllerInstance: Controller = controllerTableEntry.instance;
 
@@ -473,26 +469,7 @@ module.exports = class Router extends Base {
             let routeParamsMatch = null;
 
             while((routeParamsMatch = routeParamsRegex.exec(routeUri)) !== null) {
-                this.logger.debug('Router: Found route parameter %j ...', routeParamsMatch);
-                // @flowIgnore because we check this within the while() statement
-                if(routeParamsMatch.index === routeParamsRegex.lastIndex) {
-                    routeParamsRegex.lastIndex++;
-                }
-
-                if(routeParamsMatch !== null && routeParamsMatch.length > [].length) {
-                    const prefixlessMatch = routeParamsMatch[matchOfParamNameIndex];
-                    if(indexOf(activeRouteParams, prefixlessMatch) === matchNotFound) {
-                        activeRouteParams.push(prefixlessMatch);
-                        this._router.param(prefixlessMatch, (value, ctx, next) => {
-                            if(typeof ctx.parameters !== 'object' || ctx.parameters === null) {
-                                ctx.parameters = {};
-                            }
-
-                            ctx.parameters[prefixlessMatch] = value;
-                            return next();
-                        });
-                    }
-                }
+                routeParamsRegex.lastIndex = this._processRouteParamsMatch(routeParamsMatch, routeParamsRegex);
             }
 
             const routeAcl = this._getRouteAcl(routeName, controllerInstance);
@@ -504,6 +481,36 @@ module.exports = class Router extends Base {
         }
 
         return true;
+    }
+
+    _processRouteParamsMatch(routeParamsMatch: Object|null, routeParamsRegex: RegExp): number {
+        let activeRouteParams = [];
+        const matchOfParamNameIndex = 1;
+        const matchNotFound = -1;
+        let returnIndex: number = routeParamsRegex.lastIndex;
+
+        this.logger.debug('Router: Found route parameter %j ...', routeParamsMatch);
+        // @flowIgnore because we check this within the while() statement
+        if(routeParamsMatch.index === routeParamsRegex.lastIndex) {
+            returnIndex++;
+        }
+
+        if(routeParamsMatch !== null && routeParamsMatch.length > [].length) {
+            const prefixlessMatch = routeParamsMatch[matchOfParamNameIndex];
+            if(indexOf(activeRouteParams, prefixlessMatch) === matchNotFound) {
+                activeRouteParams.push(prefixlessMatch);
+                this._router.param(prefixlessMatch, (value, ctx, next) => {
+                    if(typeof ctx.parameters !== 'object' || ctx.parameters === null) {
+                        ctx.parameters = {};
+                    }
+
+                    ctx.parameters[prefixlessMatch] = value;
+                    return next();
+                });
+            }
+        }
+
+        return returnIndex;
     }
 
     _getRouteAcl(routeName: string, controllerInstance: Controller): Object {
