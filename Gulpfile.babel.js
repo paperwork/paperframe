@@ -3,10 +3,14 @@ const sourcemaps = require('gulp-sourcemaps');
 const babel = require('gulp-babel');
 const eslint = require('gulp-eslint');
 const rimraf = require('rimraf');
-const run = require('run-sequence');
-const watch = require('gulp-watch');
+const nodemon = require('gulp-nodemon');
 const gulpDocumentation = require('gulp-documentation');
-const shell = require('gulp-shell');
+const ava = require('gulp-ava');
+const istanbul = require('gulp-istanbul');
+const ispartaInstrumenter = require('isparta').Instrumenter;
+const exec = require('child_process').exec;
+
+const packageJson = require('./package.json');
 
 const CONFIG = {
     js: {
@@ -18,63 +22,110 @@ const CONFIG = {
             dst: './documentation'
         }
     }
+};
+
+gulp.task('default', gulp.series(tLint, tClean, tBabel, tFlowcopy, tWatch));
+
+gulp.task('compile', gulp.series(tLint, tClean, tBabel, tFlowcopy));
+
+function tClean() {
+    return new Promise((fulfill, reject) => {
+        return rimraf(CONFIG.js.dst, (err) => {
+            if(typeof err !== 'undefined' && err !== null) {
+                return reject(err);
+            }
+
+            return fulfill();
+        });
+    });
 }
 
-function errorHandler(err) {
-    console.log(err.toString());
-    this.emit('end');
-}
-
-gulp.task('default', cb => {
-    run('lint', 'flowtype', 'build', 'flowcopy', cb);
-});
-
-gulp.task('build', cb => {
-    run('clean', 'babel', cb);
-});
-
-gulp.task('clean', cb => {
-    rimraf(CONFIG.js.dst, cb);
-});
-
-gulp.task('lint', cb => {
+/**
+ * ESLint
+ */
+function tLint() {
     return gulp.src([CONFIG.js.src,'!node_modules/**'])
-        .on('error', errorHandler)
+        .on('error', (err) => {
+            console.log(err.toString());
+            gulp.emit('end');
+        })
         .pipe(eslint())
         .pipe(eslint.format())
         .pipe(eslint.failAfterError());
-});
+}
 
-gulp.task('flowtype', shell.task(['npm run flow check --show-all-errors']));
-
-gulp.task('flowcopy', shell.task(['npm run flow:copy']));
-
-gulp.task('babel', cb => {
-    gulp.src([CONFIG.js.src])
+/**
+ * Babel
+ */
+function tBabel(cb) {
+    return gulp.src([CONFIG.js.src])
         .pipe(sourcemaps.init())
         .pipe(babel({
-            presets: [],
-            plugins: ['transform-flow-strip-types']
+            'presets': ['@babel/preset-flow'],
+            'plugins': ['@babel/plugin-transform-flow-strip-types']
         }))
+        .on('error', (err) => {
+            console.log(err.toString());
+            gulp.emit('end');
+        })
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(CONFIG.js.dst))
         .on('end', cb);
-});
+}
 
-gulp.task('doc', cb => {
-    run('docs', cb);
-});
-
-gulp.task('docs', cb => {
-    return gulp.src(CONFIG.js.src)
-    .pipe(gulpDocumentation('md', {}, {
-        'name': 'Paperframe'
-    }))
-    .pipe(gulp.dest(CONFIG.documentation.js.dst));
-});
-
-gulp.task('watch', () => {
-    return watch(CONFIG.js.src, (file) => {
-        run(['lint'], 'build', 'docs');
+/**
+ * Flow
+ */
+function tFlowcopy(done) {
+    return exec('npm run flow:copy', (err, stdout, stderr) => {
+        done(err);
     });
+}
+
+/**
+ * Tests
+ */
+gulp.task('test', gulp.series(tTestBefore, tTestRun));
+
+function tTestBefore(cb) {
+    return gulp.src([CONFIG.js.src, '!tests/**/*'])
+        .on('error', (err) => {
+            console.log(err.toString());
+            gulp.emit('end');
+        })
+        //.pipe(istanbul({
+        //    'instrumenter': ispartaInstrumenter,
+        //    'includeUntested': true
+        //}))
+        .pipe(istanbul.hookRequire())
+        .pipe(gulp.dest('tests/.tmp/'))
+        .on('end', cb);
+}
+
+function tTestRun(cb) {
+    process.env.NODE_BASE_PATH = process.cwd();
+    process.env.LOG_LEVEL = 60;
+    return gulp.src(CONFIG.tests.js.trgt)
+        .pipe(ava({ 'verbose': true, 'serial': true }))
+        //.pipe(istanbul.writeReports())
+        .on('end', cb);
+}
+
+/**
+ * Documentation
+ */
+gulp.task('documentation', () => {
+    return gulp.src(CONFIG.js.src)
+        .pipe(gulpDocumentation('md', {}, {
+            'name': packageJson.name,
+            'version': packageJson.version
+        }))
+        .pipe(gulp.dest(CONFIG.documentation.js.dst));
 });
+
+/**
+ * Gulp Watch
+ */
+function tWatch() {
+    return gulp.watch(['package.json', CONFIG.js.src], gulp.series(tLint, tBabel));
+}
