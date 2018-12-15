@@ -60,6 +60,7 @@ type TServiceProvidersTable = {
  * @class      Router
  */
 module.exports = class Router extends Base {
+    _server:                    Function
     _router:                    Function
     _jwt:                       ?Function
     _jwtSecret:                 string
@@ -83,6 +84,7 @@ module.exports = class Router extends Base {
             throw new Error('Router: No options specified.');
         }
 
+        this._initServer(options);
         this._initRouter(options);
         this._initJwt(options);
         this._initLogger(options);
@@ -90,6 +92,17 @@ module.exports = class Router extends Base {
         this._initEventEmitter(options);
 
         this._initInstanceVariables();
+    }
+
+    _initServer(options: Object): boolean {
+        // [x] Check for server
+        if(options.hasOwnProperty('koaServer') === false) {
+            throw new Error('Router: No KOA server given.');
+        }
+
+        this._server = options.koaServer;
+
+        return true;
     }
 
     _initRouter(options: Object): boolean {
@@ -412,6 +425,7 @@ module.exports = class Router extends Base {
         }
 
         const serviceProvider = new ServiceProviderRequire();
+        serviceProvider.server = this._server;
         serviceProvider.logger = this.logger;
         serviceProvider.ee = this._ee;
 
@@ -536,6 +550,7 @@ module.exports = class Router extends Base {
 
         controllerInstance.ctx = ctx;
         controllerInstance.next = next;
+        controllerInstance.server = this._server;
         controllerInstance.ee = this._ee;
         controllerInstance.eventId = eventId;
         this.logger.debug('Router: %s ("%s") calling %s (%s) on %s ...', controllerInstance.remoteAddress, controllerInstance.remoteUserAgent, routeName, routeAction, routeUri);

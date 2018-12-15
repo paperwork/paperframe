@@ -3,7 +3,16 @@
 const PaperframeCommon = require('./Common');
 
 module.exports = class Base {
+    _server:                    Function
     _logger:                    Function
+
+    set server(server: Function) {
+        this._server = server;
+    }
+
+    get server(): Function {
+        return this._server;
+    }
 
     get logger(): Function {
         return this._logger;
