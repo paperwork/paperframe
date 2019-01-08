@@ -543,6 +543,8 @@ module.exports = class Router extends Base {
             return false;
         }
 
+        const logLevel: string = controllerInstance.routeLogLevel || 'debug';
+
         const eventSource = 'API';
         const eventResource = routeResource.toUpperCase();
         const eventName = routeName.toUpperCase();
@@ -553,7 +555,7 @@ module.exports = class Router extends Base {
         controllerInstance.server = this._server;
         controllerInstance.ee = this._ee;
         controllerInstance.eventId = eventId;
-        this.logger.debug('Router: %s ("%s") calling %s (%s) on %s ...', controllerInstance.remoteAddress, controllerInstance.remoteUserAgent, routeName, routeAction, routeUri);
+        this.logger[logLevel]('Router: %s ("%s") calling %s (%s) on %s ...', controllerInstance.remoteAddress, controllerInstance.remoteUserAgent, routeName, routeAction, routeUri);
 
         let controllerParams: TControllerParams = {
             'session': controllerInstance.session,
@@ -564,12 +566,12 @@ module.exports = class Router extends Base {
             'body': controllerInstance.body
         };
 
-        this.logger.debug('Router: Passing the following controller parameters: %j', controllerParams);
+        this.logger[logLevel]('Router: Passing the following controller parameters: %j', controllerParams);
 
         // Do we have a before*-handler?
         if(typeof beforeHandler === 'function') {
             try {
-                this.logger.debug('Router: Awaiting beforeHandler and overwriting controller parameters ...');
+                this.logger[logLevel]('Router: Awaiting beforeHandler and overwriting controller parameters ...');
                 controllerParams = await beforeHandler.bind(controllerInstance)(controllerParams);
             } catch(err) {
                 this.logger.error(err);
