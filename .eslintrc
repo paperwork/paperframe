@@ -5,7 +5,7 @@
         "node": true,
         "es6": true
     },
-    parserOptions: {
+    "parserOptions": {
         "ecmaVersion": 8,
         "sourceType": "module",
         "ecmaFeatures": {
@@ -18,13 +18,10 @@
     },
     "plugins": [
         "ava",
-        "flowtype",
+        "flowtype-errors",
         "async-await"
     ],
     "settings": {
-        "flowtype": {
-            "onlyFilesWithFlowAnnotation": true
-        }
     },
     "rules": {
         "indent": [2, 4],
@@ -40,7 +37,7 @@
         "no-mixed-requires": 2,
         "no-undef": 2,
         "no-underscore-dangle": 0,
-        "no-unused-vars": 0,
+        "no-unused-vars": 1,
         "no-trailing-spaces": 2,
         "no-use-before-define": [2, { "functions": true, "classes": true }],
         "no-div-regex": 2,
@@ -88,6 +85,7 @@
         "no-console": 0,
         "no-caller": 0,
         "space-in-parens": [2, "never"],
+        "object-curly-spacing": [2, "always"],
         "radix": 2,
         "handle-callback-err": 2,
         "space-infix-ops": 2,
@@ -101,14 +99,11 @@
         "guard-for-in": 2,
         "strict": 0,
         "quotes": [2, "single", { "avoidEscape": true }],
-        "quote-props": 0,
+        "quote-props": 2,
         "semi": 2,
         "accessor-pairs": 2,
         "no-dupe-keys": 2,
         "max-len": [0, { "code": 120, "comments": 120 }],
-        "flowtype/define-flow-type": 1,
-        "flowtype/use-flow-type": 1,
-        "flowtype/valid-syntax": 1,
         "ava/assertion-arguments": 2,
         "ava/assertion-message": [0, "always"],
         "ava/max-asserts": [0, 5],
@@ -130,6 +125,9 @@
         "ava/use-test": 2,
         "ava/use-true-false": 2,
         "async-await/space-after-async": 2,
-        "async-await/space-after-await": 2
+        "async-await/space-after-await": 2,
+        "flowtype-errors/show-errors": "error",
+        "flowtype-errors/show-warnings": "warn",
+        "flowtype-errors/enforce-min-coverage": ["error", 50]
     }
 }

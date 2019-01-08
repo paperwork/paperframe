@@ -2,8 +2,7 @@
 ./src/**/.js
 
 [ignore]
-./tests
-./compiled
+./lib
 
 [lints]
 untyped-type-import=error
@@ -11,3 +10,4 @@ untyped-type-import=error
 [options]
 suppress_comment= \\(.\\|\n\\)*\\@flowIgnore
 module.ignore_non_literal_requires=true
+include_warnings=true
