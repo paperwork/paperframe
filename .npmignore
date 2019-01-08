@@ -2,9 +2,11 @@ src
 documentation
 test
 node_modules
+.babelrc
+.editorconfig
 .eslintignore
 .eslintrc
 .gitignore
-.editorconfig
-.DS_Store
+Gulpfile.js
 *.sublime-project
+.DS_Store
