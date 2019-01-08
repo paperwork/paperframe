@@ -1,10 +1,5 @@
 //@flow
 
-
-const path = require('path');
-
-const capitalize = require('lodash').capitalize;
-
 module.exports.auto = (collectionName: string, availableDrivers: Object) => class Collection {
     _dbc:                       Object
     _collectionDriver:          Function

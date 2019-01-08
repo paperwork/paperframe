@@ -77,6 +77,7 @@ module.exports = class Base {
             return process.env[name];
         }
 
+        // eslint-disable-next-line no-undefined
         return undefined;
     }
 };

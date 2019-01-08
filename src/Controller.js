@@ -54,12 +54,10 @@ import type {
     TEventDataTable
 } from './Event';
 
-type nullPromise = Promise<null>;
-type errorPromise = Promise<string>;
-
 export interface IController {
     ctx: Object;
     next: Function;
+    +routeLogLevel: string;
     eventId: string;
     ee: EventEmitter;
     emitEventData(eventData: TEventDataTable): Promise<Array<any>>;
@@ -107,6 +105,10 @@ module.exports = class Controller extends Base implements IController {
 
     get next(): Function {
         return this._next;
+    }
+
+    get routeLogLevel(): string {
+        return 'debug';
     }
 
     set eventId(eventId: string) {
@@ -174,10 +176,10 @@ module.exports = class Controller extends Base implements IController {
     }
 
     _ctxHasState(ctx: Object): boolean {
-        if(typeof this._ctx !== 'undefined'
-        && this._ctx !== null
-        && this._ctx.hasOwnProperty('state')
-        && typeof this._ctx.state === 'object') {
+        if(typeof ctx !== 'undefined'
+        && ctx !== null
+        && ctx.hasOwnProperty('state')
+        && typeof ctx.state === 'object') {
             return true;
         }
 
@@ -260,6 +262,9 @@ module.exports = class Controller extends Base implements IController {
     }
 
     async onEvent(eventId: string, eventPackage: TEventPackage): Promise<boolean> {
+        const logLevel: string = this.routeLogLevel || 'trace';
+        this.logger[logLevel]('Controller: Received event %s with contents: %j', eventPackage);
+
         return true;
     }
 

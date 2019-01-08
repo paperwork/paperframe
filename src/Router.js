@@ -1,6 +1,5 @@
 //@flow
 
-const fs = require('fs');
 const path = require('path');
 const EventEmitter = require('eventemitter2').EventEmitter2;
 
@@ -222,7 +221,7 @@ module.exports = class Router extends Base {
         const modulesKeys: Array<string> = Object.keys(this._modules);
         const modulesKeysSize: number = modulesKeys.length;
 
-        for(let i = 0; i < modulesKeysSize; i++) {
+        for(let i: number = 0; i < modulesKeysSize; i++) {
             const moduleName: string = modulesKeys[i];
             const moduleRequire: Function = this._modules[moduleName];
 
@@ -247,7 +246,7 @@ module.exports = class Router extends Base {
         }
 
         const collectionsArraySize: number = collectionsArray.length;
-        for(let i = 0; i < collectionsArraySize; i++) {
+        for(let i: number = 0; i < collectionsArraySize; i++) {
             const collection: string = collectionsArray[i];
 
             const collectionRequire: Function|null = await this._initializeCollection(collection);
@@ -261,7 +260,7 @@ module.exports = class Router extends Base {
     }
 
     async _initializeCollection(collection: string): Promise<Function|null> {
-        const prefix = process.env.SERVICE_PREFIX || 'paperframe';
+        const prefix: string = process.env.SERVICE_PREFIX || 'paperframe';
 
         if(collection.length === Common.EMPTY) {
             this.logger.debug('Router: Not initializing collection, because it is empty.');
@@ -270,7 +269,7 @@ module.exports = class Router extends Base {
 
         this.logger.debug('Router: Initializing collection %s ...', collection);
 
-        let collectionRequire = this.loadExtension(
+        let collectionRequire: Function = this.loadExtension(
             path.join(this._dirname, 'Collections', upperFirst(collection)),
             (prefix + '-collection-' + collection)
         );
@@ -292,7 +291,7 @@ module.exports = class Router extends Base {
         }
 
         const modulesArraySize: number = modulesArray.length;
-        for(let i = 0; i < modulesArraySize; i++) {
+        for(let i: number = 0; i < modulesArraySize; i++) {
             const module: string = modulesArray[i];
 
             const moduleRequire: Function|null = await this._initializeModule(module);
@@ -306,7 +305,7 @@ module.exports = class Router extends Base {
     }
 
     async _initializeModule(module: string): Promise<Function|null> {
-        const prefix = process.env.SERVICE_PREFIX || 'paperframe';
+        const prefix: string = process.env.SERVICE_PREFIX || 'paperframe';
 
         if(module.length === Common.EMPTY) {
             this.logger.debug('Router: Not initializing module, because it is empty.');
@@ -315,7 +314,7 @@ module.exports = class Router extends Base {
 
         this.logger.debug('Router: Initializing module %s ...', module);
 
-        let moduleRequire = this.loadExtension(
+        let moduleRequire: Function = this.loadExtension(
             path.join(this._dirname, 'Modules', upperFirst(module)),
             (prefix + '-module-' + module)
         );
@@ -337,7 +336,7 @@ module.exports = class Router extends Base {
         }
 
         const controllersArraySize: number = controllersArray.length;
-        for(let i = 0; i < controllersArraySize; i++) {
+        for(let i: number = 0; i < controllersArraySize; i++) {
             const ControllerClass: Function = controllersArray[i];
             controllersTable[ControllerClass.resource] = await this._initializeController(ControllerClass);
         }
@@ -396,7 +395,7 @@ module.exports = class Router extends Base {
         }
 
         const dependenciesArraySize: number = dependenciesArray.length;
-        for(let i = 0; i < dependenciesArraySize; i++) {
+        for(let i: number = 0; i < dependenciesArraySize; i++) {
             const dependency: string = dependenciesArray[i];
 
             if(this._serviceProviders.hasOwnProperty(dependency) === false) {
@@ -410,10 +409,10 @@ module.exports = class Router extends Base {
     }
 
     async _getDependency(dependency: string): Promise<Function> {
-        const prefix = process.env.SERVICE_PREFIX || 'paperframe';
+        const prefix: string = process.env.SERVICE_PREFIX || 'paperframe';
 
         this.logger.debug('Router: Initializing new dependency %s ...', dependency);
-        let ServiceProviderRequire = this.loadExtensionFallback(
+        let ServiceProviderRequire: Function = this.loadExtensionFallback(
             path.join(this._dirname, 'ServiceProviders', upperFirst(dependency)),
             path.join(__dirname, 'ServiceProviders', upperFirst(dependency)),
             (prefix + '-serviceprovider-' + dependency)
@@ -424,7 +423,7 @@ module.exports = class Router extends Base {
             throw new Error('Router: Service Provider could not be loaded. Aborting!');
         }
 
-        const serviceProvider = new ServiceProviderRequire();
+        const serviceProvider: Function = new ServiceProviderRequire();
         serviceProvider.server = this._server;
         serviceProvider.logger = this.logger;
         serviceProvider.ee = this._ee;
@@ -445,16 +444,16 @@ module.exports = class Router extends Base {
 
         const controllersTableKeys: Array<string> = Object.keys(controllersTable);
         const controllersTableKeysSize: number = controllersTableKeys.length;
-        for(let i = 0; i < controllersTableKeysSize; i++) {
+        for(let i: number = 0; i < controllersTableKeysSize; i++) {
             const controllerResource: string = controllersTableKeys[i];
             const controllerTableEntry: TControllersTableEntry = controllersTable[controllerResource];
 
             const routingTable: TRoutingTable = this.routingTable(controllerResource);
             const routingTableSize: number = routingTable.length;
 
-            for(let j = 0; j < routingTableSize; j++) {
+            for(let j: number = 0; j < routingTableSize; j++) {
                 const routingEntry: TRoutingTableEntry = routingTable[j];
-                const success: boolean = await this._initializeRoute(controllerResource, controllerTableEntry, routingEntry);
+                await this._initializeRoute(controllerResource, controllerTableEntry, routingEntry);
             }
         }
 
@@ -472,21 +471,21 @@ module.exports = class Router extends Base {
         const handler: Function = controllerInstance[routingEntry.name];
 
         if(typeof handler === 'function') {
-            const routeName = routingEntry.name;
-            const routeAction = routingEntry.action;
-            const routeResource = controllerResource;
-            const routeUri = (controllerRoute + routingEntry.route);
+            const routeName: string = routingEntry.name;
+            const routeAction: string = routingEntry.action;
+            const routeResource: string = controllerResource;
+            const routeUri: string = (controllerRoute + routingEntry.route);
             this.logger.debug('Router: Initializing %s handler for route %s at %s ...', routeName, controllerResource, routeUri);
 
-            const routeParamsRegex = /\:([a-zA-Z]+)/g;
+            const routeParamsRegex: RegExp = /\:([a-zA-Z]+)/g;
 
-            let routeParamsMatch = null;
+            let routeParamsMatch: Object|null = null;
 
             while((routeParamsMatch = routeParamsRegex.exec(routeUri)) !== null) {
                 routeParamsRegex.lastIndex = this._processRouteParamsMatch(routeParamsMatch, routeParamsRegex);
             }
 
-            const routeAcl = this._getRouteAcl(routeName, controllerInstance);
+            const routeAcl: Object = this._getRouteAcl(routeName, controllerInstance);
 
             // @flowIgnore access on computed type.
             this._router[routeAction](routeResource, routeUri, async (ctx, next) => {
@@ -498,9 +497,9 @@ module.exports = class Router extends Base {
     }
 
     _processRouteParamsMatch(routeParamsMatch: Object|null, routeParamsRegex: RegExp): number {
-        let activeRouteParams = [];
-        const matchOfParamNameIndex = 1;
-        const matchNotFound = -1;
+        let activeRouteParams: Array<string> = [];
+        const matchOfParamNameIndex: number = 1;
+        const matchNotFound: number = -1;
         let returnIndex: number = routeParamsRegex.lastIndex;
 
         this.logger.debug('Router: Found route parameter %j ...', routeParamsMatch);
@@ -510,7 +509,7 @@ module.exports = class Router extends Base {
         }
 
         if(routeParamsMatch !== null && routeParamsMatch.length > [].length) {
-            const prefixlessMatch = routeParamsMatch[matchOfParamNameIndex];
+            const prefixlessMatch: string = routeParamsMatch[matchOfParamNameIndex];
             if(indexOf(activeRouteParams, prefixlessMatch) === matchNotFound) {
                 activeRouteParams.push(prefixlessMatch);
                 this._router.param(prefixlessMatch, (value, ctx, next) => {
@@ -528,7 +527,7 @@ module.exports = class Router extends Base {
     }
 
     _getRouteAcl(routeName: string, controllerInstance: Controller): Object {
-        let routeAcl = { 'protected': false };
+        let routeAcl: Object = { 'protected': false };
 
         if(controllerInstance.hasOwnProperty('routeAcl') === true
         && controllerInstance.routeAcl.hasOwnProperty(routeName) === true) {
@@ -545,10 +544,10 @@ module.exports = class Router extends Base {
 
         const logLevel: string = controllerInstance.routeLogLevel || 'debug';
 
-        const eventSource = 'API';
-        const eventResource = routeResource.toUpperCase();
-        const eventName = routeName.toUpperCase();
-        const eventId = eventSource + '.' + eventResource + '.' + eventName;
+        const eventSource: string = 'API';
+        const eventResource: string = routeResource.toUpperCase();
+        const eventName: string = routeName.toUpperCase();
+        const eventId: string = eventSource + '.' + eventResource + '.' + eventName;
 
         controllerInstance.ctx = ctx;
         controllerInstance.next = next;
@@ -580,7 +579,7 @@ module.exports = class Router extends Base {
         }
 
         try {
-            let controllerReturn = await handler.bind(controllerInstance)(controllerParams);
+            await handler.bind(controllerInstance)(controllerParams);
 
             const eventData: TEventDataTable = controllerInstance.readEventData();
             await controllerInstance.emitEventData(eventData);
@@ -593,12 +592,12 @@ module.exports = class Router extends Base {
     }
 
     async _requestHasRequiredHeaders(ctx: Object, routeAcl: Object): Promise<boolean> {
-        const xClientPrefix = `x-${process.env.SERVICE_PREFIX || 'paperframe'}-client`;
+        const xClientPrefix: string = `x-${process.env.SERVICE_PREFIX || 'paperframe'}-client`;
         if((ctx.request.header.hasOwnProperty(xClientPrefix) === false
         || ctx.request.header.hasOwnProperty(`${xClientPrefix}-version`) === false
         || ctx.request.header.hasOwnProperty(`${xClientPrefix}-api-version`) === false)
         && (typeof routeAcl === 'undefined' || routeAcl.protected === true)) {
-            const errorMessage = `Client did not send required ${xClientPrefix} / ${xClientPrefix}-version / ${xClientPrefix}-api-version headers.`;
+            const errorMessage: string = `Client did not send required ${xClientPrefix} / ${xClientPrefix}-version / ${xClientPrefix}-api-version headers.`;
             this.logger.error('Router: %s', errorMessage);
             ctx.status = HttpStatus.BAD_REQUEST;
             ctx.body = errorMessage;
@@ -612,7 +611,7 @@ module.exports = class Router extends Base {
         let acls: Object = {};
 
         forEach(this._controllers, (controllerTableEntry, route) => {
-            const controller = controllerTableEntry.instance;
+            const controller: Object = controllerTableEntry.instance;
             if(typeof controller.routeAcl !== 'undefined'
             && controller.routeAcl !== null) {
                 acls[route] = controller.routeAcl;
@@ -626,7 +625,7 @@ module.exports = class Router extends Base {
         return (ctx, next) => {
             return next().catch((err) => {
                 if (HttpStatus.UNAUTHORIZED === err.status) {
-                    let resp = {
+                    let resp: Object = {
                         'code': Common.RS_TOKEN_INVALID,
                         'response': 'Invalid token',
                         'timestamp': Math.floor(new Date() / Common.MILLISECONDS_PER_SECOND)
@@ -647,14 +646,14 @@ module.exports = class Router extends Base {
                 return next();
             }
 
-            const url = ctx.url;
-            const matchedPaths = this._authorizationGetMatchedPaths(url);
+            const url: string = ctx.url;
+            const matchedPaths: Array<Object>|null = this._authorizationGetMatchedPaths(url);
 
             if(matchedPaths === null) {
                 return next();
             }
 
-            const requestMethod = ctx.request.method;
+            const requestMethod: string = ctx.request.method;
             const { requestRoute, requestResource } = this._authorizationReqRouteRes(requestMethod, matchedPaths);
 
             if(requestRoute === null) {
@@ -663,8 +662,8 @@ module.exports = class Router extends Base {
 
             const httpMethod: string = ctx.method.toLowerCase();
             const firstElement: number = 0;
-            const methods = this._authorizationGetMethods(httpMethod, requestRoute, requestResource);
-            const method = methods[firstElement].name;
+            const methods: Array<Object> = this._authorizationGetMethods(httpMethod, requestRoute, requestResource);
+            const method: string = methods[firstElement].name;
 
             if(routesAcl.hasOwnProperty(requestResource)
             && routesAcl[requestResource].hasOwnProperty(method)
@@ -673,7 +672,7 @@ module.exports = class Router extends Base {
             }
 
             // @flowIgnore because flow doesn't seem to notice the undefined/null check at the beginning.
-            return this._jwt({ secret: this._jwtSecret })(ctx, next);
+            return this._jwt({ 'secret': this._jwtSecret })(ctx, next);
         };
     }
 
@@ -687,7 +686,7 @@ module.exports = class Router extends Base {
     }
 
     _authorizationGetMatchedPaths(fromUrl: string): Array<Object>|null {
-        const matchedPaths = this._router.match(fromUrl).path;
+        const matchedPaths: Array<Object> = this._router.match(fromUrl).path;
 
         if(typeof matchedPaths === 'undefined'
         || matchedPaths === null
@@ -701,7 +700,7 @@ module.exports = class Router extends Base {
     _authorizationReqRouteRes(requestMethod: string, matchedPaths: Array<Object>): Object {
         let requestRoute: string|null = null;
         let requestResource: string|null;
-        const methodNotFound = -1;
+        const methodNotFound: number = -1;
         forEach(matchedPaths, matchedPath => {
             if(indexOf(matchedPath.methods, requestMethod) !== methodNotFound) {
                 requestRoute = matchedPath.path;
