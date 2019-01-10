@@ -36,7 +36,6 @@ module.exports = class DatabaseServiceProvider extends ServiceProvider {
         }
 
         this._driverRequire = driverRequire;
-
         this._driver = new this._driverRequire();
         this._driver.logger = this.logger;
         return this._driver.initialize();

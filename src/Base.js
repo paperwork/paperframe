@@ -1,6 +1,7 @@
 //@flow
 
 const PaperframeCommon = require('./Common');
+const pth = require('path');
 
 module.exports = class Base {
     _server:                    Function
@@ -22,7 +23,7 @@ module.exports = class Base {
         this._logger = logger;
     }
 
-    _require(pkg: string) {
+    _require(pkg: string): Object|null {
         try {
             const packageRequire = require(pkg);
             return packageRequire;
@@ -38,18 +39,37 @@ module.exports = class Base {
         }
     }
 
-    loadExtension(path: string, module: string): ?Function {
-        let extension = this._require(path);
+    _fixEsModules(path: string, extension: Object): Function {
+        const keys: Array<string> = Object.keys(extension);
+        if(keys.length === PaperframeCommon.ONE) {
+            const onlyKey: string = keys[PaperframeCommon.ZERO];
+            const basename: string = pth.basename(path);
 
-        if(extension === null) {
-            extension = this._require(module);
+            if(onlyKey.toLowerCase().startsWith(basename.toLowerCase())) {
+                this.logger.trace('_fixEsModules: Fixing %s by loading only %s.', basename, onlyKey);
+                return extension[onlyKey];
+            }
         }
 
         return extension;
     }
 
+    loadExtension(path: string, module: string): ?Function {
+        let extension: Object|null = this._require(path);
+
+        if(extension !== null) {
+            return this._fixEsModules(path, extension);
+        }
+
+        return this._require(module);
+    }
+
     loadExtensionFallback(path: string, fallbackPath: string, module: string): ?Function {
         let extension = this._require(path);
+
+        if(extension !== null) {
+            return this._fixEsModules(path, extension);
+        }
 
         if(extension === null) {
             extension = this._require(module);
@@ -57,6 +77,10 @@ module.exports = class Base {
 
         if(extension === null) {
             extension = this._require(fallbackPath);
+
+            if(extension !== null) {
+                return this._fixEsModules(path, extension);
+            }
         }
 
         return extension;

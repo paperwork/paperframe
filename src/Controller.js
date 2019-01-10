@@ -235,7 +235,10 @@ module.exports = class Controller extends Base implements IController {
                 throw new Error('Controller: Cannot instantiate new Collection as no Database driver is available. Controller needs to specify "database" as dependency.');
             }
 
-            return (new collections[collectionId](database.driver));
+            const initializedCollection: Function = new collections[collectionId](database.driver);
+            initializedCollection.logger = this.logger;
+
+            return initializedCollection;
         }
 
         return null;
@@ -262,9 +265,7 @@ module.exports = class Controller extends Base implements IController {
     }
 
     async onEvent(eventId: string, eventPackage: TEventPackage): Promise<boolean> {
-        const logLevel: string = this.routeLogLevel || 'trace';
-        this.logger[logLevel]('Controller: Received event %s with contents: %j', eventPackage);
-
+        this.logger.trace('Controller: Received unhandled event %s with contents: %j', eventId, eventPackage);
         return true;
     }
 
